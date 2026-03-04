@@ -20,7 +20,7 @@ export default function NovaCategoriaPage() {
 
     useEffect(() => {
         if (editId) {
-            async function loadCategory() {
+            const loadCategory = async () => {
                 const cats = await getAllCategories();
                 const cat = cats.find(c => c.id === editId);
                 if (cat) {
@@ -30,7 +30,7 @@ export default function NovaCategoriaPage() {
                     setSortOrder(cat.sort_order);
                     setActive(cat.active);
                 }
-            }
+            };
             loadCategory();
         }
     }, [editId]);
