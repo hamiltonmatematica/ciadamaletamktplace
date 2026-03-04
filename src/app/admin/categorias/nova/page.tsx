@@ -1,12 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createCategory, updateCategory, getAllCategories } from '@/lib/data';
 import { Category } from '@/types/database';
 
 export default function NovaCategoriaPage() {
+    return (
+        <Suspense fallback={<div className="flex-1 p-8 text-slate-400">Carregando...</div>}>
+            <NovaCategoriaContent />
+        </Suspense>
+    );
+}
+
+function NovaCategoriaContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const editId = searchParams.get('id');
