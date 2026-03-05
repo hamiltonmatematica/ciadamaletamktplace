@@ -25,11 +25,15 @@ export default function AdminCategoriasPage() {
     };
 
     return (
-        <div className="flex-1 p-8">
+        <div className="flex-1 p-8 bg-slate-950 min-h-screen text-white">
             <div className="flex items-center justify-between mb-8">
                 <div>
-                    <h1 className="text-3xl font-black">Categorias</h1>
-                    <p className="text-slate-500 mt-1">{categories.length} categorias cadastradas</p>
+                    <Link href="/admin" className="inline-flex items-center gap-1 text-sm text-slate-400 hover:text-primary transition-colors mb-3">
+                        <span className="material-symbols-outlined text-sm">arrow_back</span>
+                        Voltar ao Dashboard
+                    </Link>
+                    <h1 className="text-3xl font-black text-white">Categorias</h1>
+                    <p className="text-slate-400 mt-1">{categories.length} categorias cadastradas</p>
                 </div>
                 <Link
                     href="/admin/categorias/nova"
@@ -43,13 +47,13 @@ export default function AdminCategoriasPage() {
             {loading ? (
                 <div className="space-y-4">
                     {[1, 2, 3].map(i => (
-                        <div key={i} className="bg-slate-800/50 rounded-2xl p-6 animate-pulse h-20" />
+                        <div key={i} className="bg-slate-800 rounded-2xl p-6 animate-pulse h-20" />
                     ))}
                 </div>
             ) : (
                 <div className="space-y-3">
                     {categories.map((cat) => (
-                        <div key={cat.id} className="flex items-center justify-between bg-slate-800/50 rounded-2xl p-5 border border-slate-700/50 hover:border-primary/30 transition-all group">
+                        <div key={cat.id} className="flex items-center justify-between bg-slate-800 rounded-2xl p-5 border border-slate-700 hover:border-primary/30 transition-all group">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
                                     <span className="material-symbols-outlined text-primary text-xl">{cat.icon}</span>
