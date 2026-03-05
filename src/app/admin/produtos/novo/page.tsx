@@ -55,18 +55,18 @@ export default function NovoProdutoPage() {
     };
 
     return (
-        <div className="flex-1 p-8 overflow-y-auto">
+        <div className="flex-1 p-8 overflow-y-auto bg-slate-950 min-h-screen text-white">
             <div className="mb-8">
                 <Link href="/admin" className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-primary transition-colors mb-4">
                     <span className="material-symbols-outlined text-sm">arrow_back</span>
                     Voltar ao Dashboard
                 </Link>
-                <h1 className="text-3xl font-black">Novo Produto</h1>
+                <h1 className="text-3xl font-black text-white">Novo Produto</h1>
             </div>
 
             <form onSubmit={handleSubmit} className="max-w-3xl space-y-6">
                 {/* Informações Básicas */}
-                <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50 space-y-5">
+                <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700 space-y-5">
                     <h2 className="font-bold text-lg text-white flex items-center gap-2">
                         <span className="material-symbols-outlined text-primary">info</span>
                         Informações Básicas
@@ -111,7 +111,7 @@ export default function NovoProdutoPage() {
                 </div>
 
                 {/* Preço e Quantidade */}
-                <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50 space-y-5">
+                <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700 space-y-5">
                     <h2 className="font-bold text-lg text-white flex items-center gap-2">
                         <span className="material-symbols-outlined text-primary">payments</span>
                         Preço e Quantidade
@@ -147,7 +147,7 @@ export default function NovoProdutoPage() {
                 </div>
 
                 {/* Classificação */}
-                <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50 space-y-5">
+                <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700 space-y-5">
                     <h2 className="font-bold text-lg text-white flex items-center gap-2">
                         <span className="material-symbols-outlined text-primary">label</span>
                         Classificação

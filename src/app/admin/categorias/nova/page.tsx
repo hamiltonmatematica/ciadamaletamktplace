@@ -74,17 +74,17 @@ function NovaCategoriaContent() {
     ];
 
     return (
-        <div className="flex-1 p-8">
+        <div className="flex-1 p-8 bg-slate-950 min-h-screen text-white">
             <div className="mb-8">
                 <Link href="/admin/categorias" className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-primary transition-colors mb-4">
                     <span className="material-symbols-outlined text-sm">arrow_back</span>
                     Voltar para Categorias
                 </Link>
-                <h1 className="text-3xl font-black">{editId ? 'Editar Categoria' : 'Nova Categoria'}</h1>
+                <h1 className="text-3xl font-black text-white">{editId ? 'Editar Categoria' : 'Nova Categoria'}</h1>
             </div>
 
             <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
-                <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50 space-y-5">
+                <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700 space-y-5">
                     <div>
                         <label className="block text-sm font-bold text-slate-300 mb-2">Nome da Categoria</label>
                         <input
