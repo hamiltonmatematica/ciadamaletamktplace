@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Logo from '@/components/ui/logo';
 import { getAllProducts, getAllCategories, deleteProduct } from '@/lib/data';
+import { supabase } from '@/lib/supabase';
 import { Product, Category } from '@/types/database';
 
 export default function AdminDashboard() {
@@ -50,14 +51,26 @@ export default function AdminDashboard() {
                             href={item.href}
                             onClick={() => setActiveNav(item.id)}
                             className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all ${activeNav === item.id
-                                    ? 'bg-primary/10 text-primary'
-                                    : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                                ? 'bg-primary/10 text-primary'
+                                : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
                                 }`}
                         >
                             <span className="material-symbols-outlined text-xl">{item.icon}</span>
                             {item.label}
                         </Link>
                     ))}
+                    <button
+                        onClick={async () => {
+                            const { error } = await supabase!.auth.signOut();
+                            if (!error) {
+                                window.location.href = '/admin/login';
+                            }
+                        }}
+                        className="w-full flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-red-400 hover:text-red-300 hover:bg-red-950/30 transition-all mt-4"
+                    >
+                        <span className="material-symbols-outlined text-xl">logout</span>
+                        Sair
+                    </button>
                 </nav>
                 <div className="p-4 border-t border-slate-800">
                     <Link href="/" className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all">
