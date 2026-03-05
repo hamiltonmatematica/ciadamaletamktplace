@@ -30,7 +30,7 @@ export default function AdminLayout({
         }
 
         const checkAuth = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await supabase!.auth.getSession();
             if (!session) {
                 router.replace('/admin/login');
             } else {
@@ -41,7 +41,7 @@ export default function AdminLayout({
 
         checkAuth();
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        const { data: { subscription } } = supabase!.auth.onAuthStateChange((_event, session) => {
             if (!session && !isLoginPage) {
                 router.replace('/admin/login');
             }
