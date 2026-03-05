@@ -38,8 +38,8 @@ export default function Home() {
 
             <main className="flex-1">
                 {/* Categories */}
-                <div className="w-full bg-white dark:bg-slate-900/50 shadow-sm sticky top-[73px] z-40">
-                    <div className="mx-auto flex max-w-7xl items-center gap-8 overflow-x-auto px-6 py-2 no-scrollbar">
+                <div className="w-full bg-white dark:bg-slate-900/50 shadow-sm sticky top-[57px] sm:top-[65px] z-40">
+                    <div className="mx-auto flex max-w-7xl items-center gap-4 sm:gap-8 overflow-x-auto px-4 sm:px-6 py-2 no-scrollbar">
                         <button
                             onClick={() => handleCategoryClick(null)}
                             className={`flex flex-shrink-0 items-center gap-2 py-3 border-b-2 transition-all font-bold text-sm ${activeCategory === null ? 'border-primary text-primary' : 'border-transparent text-slate-500 hover:text-primary'
@@ -63,8 +63,8 @@ export default function Home() {
                 </div>
 
                 {/* Hero Banner */}
-                <section className="mx-auto max-w-7xl px-6 py-8">
-                    <div className="relative overflow-hidden rounded-3xl bg-slate-900 aspect-[21/9] flex items-center justify-center text-center group">
+                <section className="mx-auto max-w-7xl px-4 sm:px-6 py-4 sm:py-8">
+                    <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-slate-900 aspect-[16/9] sm:aspect-[21/9] flex items-center justify-center text-center group">
                         <div className="absolute inset-0 z-0">
                             <img
                                 className="h-full w-full object-cover opacity-60 transition-transform duration-1000 group-hover:scale-105"
@@ -74,23 +74,23 @@ export default function Home() {
                             <div className="absolute inset-0 bg-gradient-to-t from-background-dark/80 via-transparent to-transparent" />
                         </div>
                         <div className="relative z-10 max-w-2xl px-4">
-                            <h2 className="mb-4 text-5xl font-black tracking-tight text-white lg:text-7xl">Festas Mágicas</h2>
-                            <p className="mb-8 text-lg font-medium text-slate-200 lg:text-xl">
+                            <h2 className="mb-2 sm:mb-4 text-2xl sm:text-5xl font-black tracking-tight text-white lg:text-7xl">Festas Mágicas</h2>
+                            <p className="mb-4 sm:mb-8 text-sm sm:text-lg font-medium text-slate-200 lg:text-xl hidden sm:block">
                                 Descubra nossa coleção exclusiva de maletas e kits de festa personalizados para tornar cada celebração inesquecível.
                             </p>
-                            <button className="group inline-flex items-center gap-2 rounded-full bg-primary px-8 py-4 text-lg font-bold text-white shadow-xl shadow-primary/30 hover:bg-primary/90 hover:scale-105 transition-all">
+                            <button className="group inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 sm:px-8 sm:py-4 text-sm sm:text-lg font-bold text-white shadow-xl shadow-primary/30 hover:bg-primary/90 hover:scale-105 transition-all">
                                 Ver Coleção
-                                <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                                <span className="material-symbols-outlined text-lg sm:text-2xl group-hover:translate-x-1 transition-transform">arrow_forward</span>
                             </button>
                         </div>
                     </div>
                 </section>
 
                 {/* Products Grid */}
-                <section className="mx-auto max-w-7xl px-6 py-12">
-                    <div className="mb-10 flex items-end justify-between">
+                <section className="mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-12">
+                    <div className="mb-6 sm:mb-10 flex items-end justify-between">
                         <div>
-                            <h3 className="text-3xl font-extrabold tracking-tight">
+                            <h3 className="text-xl sm:text-3xl font-extrabold tracking-tight">
                                 {activeCategory ? categories.find(c => c.slug === activeCategory)?.name : 'Produtos em Destaque'}
                             </h3>
                             <p className="mt-2 text-slate-500 font-medium">
@@ -100,7 +100,7 @@ export default function Home() {
                     </div>
 
                     {loading ? (
-                        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+                        <div className="grid grid-cols-2 gap-3 sm:gap-8 lg:grid-cols-4">
                             {[1, 2, 3, 4].map(i => (
                                 <div key={i} className="rounded-3xl bg-white dark:bg-slate-900 p-3 border border-primary/5">
                                     <div className="aspect-square rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
@@ -117,7 +117,7 @@ export default function Home() {
                             <p className="text-slate-500 font-medium text-lg">Nenhum produto encontrado nesta categoria</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+                        <div className="grid grid-cols-2 gap-3 sm:gap-8 lg:grid-cols-4">
                             {products.map((product) => (
                                 <ProductCard key={product.id} product={product} />
                             ))}

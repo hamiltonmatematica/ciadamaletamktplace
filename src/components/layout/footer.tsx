@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import Logo from '@/components/ui/logo';
+import Image from 'next/image';
 
 export default function Footer() {
     return (
@@ -9,7 +9,9 @@ export default function Footer() {
             <div className="mx-auto max-w-7xl grid grid-cols-1 md:grid-cols-4 gap-12">
                 <div className="col-span-1 md:col-span-1">
                     <div className="mb-6">
-                        <Logo />
+                        <Link href="/">
+                            <Image src="/brand/C TRANSP 1.png" alt="Cia da Maleta" width={150} height={100} className="object-contain" />
+                        </Link>
                     </div>
                     <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
                         Transformando cada celebração em uma jornada mágica com nossas maletas exclusivas e kits de festa selecionados.
