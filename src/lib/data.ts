@@ -7,14 +7,14 @@ import { Category, Product } from '@/types/database';
 export async function getCategories(): Promise<Category[]> {
     if (!isSupabaseConfigured) return MOCK_CATEGORIES.filter(c => c.active);
     const { data, error } = await supabase!.from('categories').select('*').eq('active', true).order('sort_order');
-    if (error) { console.error(error); return MOCK_CATEGORIES; }
+    if (error) { console.error(error); return []; }
     return data || [];
 }
 
 export async function getAllCategories(): Promise<Category[]> {
     if (!isSupabaseConfigured) return MOCK_CATEGORIES;
     const { data, error } = await supabase!.from('categories').select('*').order('sort_order');
-    if (error) { console.error(error); return MOCK_CATEGORIES; }
+    if (error) { console.error(error); return []; }
     return data || [];
 }
 
@@ -74,21 +74,21 @@ export async function getProducts(categorySlug?: string): Promise<Product[]> {
         if (cat) query = query.eq('category_id', cat.id);
     }
     const { data, error } = await query;
-    if (error) { console.error(error); return MOCK_PRODUCTS; }
+    if (error) { console.error(error); return []; }
     return data || [];
 }
 
 export async function getFeaturedProducts(): Promise<Product[]> {
     if (!isSupabaseConfigured) return MOCK_PRODUCTS.filter(p => p.featured);
     const { data, error } = await supabase!.from('products').select('*, category:categories(*), images:product_images(*)').eq('featured', true).eq('status', 'active').order('created_at', { ascending: false });
-    if (error) { console.error(error); return MOCK_PRODUCTS.filter(p => p.featured); }
+    if (error) { console.error(error); return []; }
     return data || [];
 }
 
 export async function getAllProducts(): Promise<Product[]> {
     if (!isSupabaseConfigured) return MOCK_PRODUCTS;
     const { data, error } = await supabase!.from('products').select('*, category:categories(*), images:product_images(*)').order('created_at', { ascending: false });
-    if (error) { console.error(error); return MOCK_PRODUCTS; }
+    if (error) { console.error(error); return []; }
     return data || [];
 }
 

@@ -30,7 +30,6 @@ export default function Header() {
                     <Link href="/" className="text-sm font-semibold hover:text-primary transition-colors">Home</Link>
                     <Link href="#" className="text-sm font-semibold hover:text-primary transition-colors">Coleções</Link>
                     <Link href="#" className="text-sm font-semibold hover:text-primary transition-colors">Novidades</Link>
-                    <Link href="/admin" className="text-sm font-semibold hover:text-primary transition-colors">Admin</Link>
                 </nav>
 
                 <div className="flex items-center gap-3">

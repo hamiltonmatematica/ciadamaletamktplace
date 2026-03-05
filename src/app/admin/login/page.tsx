@@ -2,19 +2,40 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Logo from '@/components/ui/logo';
+import { supabase } from '@/lib/supabase';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
     const router = useRouter();
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Simple mock login
-        if (email && password) {
-            router.push('/admin');
+        setError('');
+        setLoading(true);
+
+        if (!supabase) {
+            setError('Sistema de autenticação não configurado.');
+            setLoading(false);
+            return;
         }
+
+        const { error: authError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        });
+
+        if (authError) {
+            setError('E-mail ou senha incorretos.');
+            setLoading(false);
+            return;
+        }
+
+        router.push('/admin');
     };
 
     return (
@@ -27,6 +48,12 @@ export default function LoginPage() {
                 </div>
 
                 <form className="mt-8 space-y-6 bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-2xl border border-primary/5" onSubmit={handleLogin}>
+                    {error && (
+                        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl text-sm font-medium">
+                            {error}
+                        </div>
+                    )}
+
                     <div className="space-y-4">
                         <div>
                             <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">E-mail</label>
@@ -34,7 +61,7 @@ export default function LoginPage() {
                                 type="email"
                                 required
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary outline-none transition-all"
-                                placeholder="admin@ciadamaleta.com.br"
+                                placeholder="seu@email.com"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                             />
@@ -54,9 +81,10 @@ export default function LoginPage() {
 
                     <button
                         type="submit"
-                        className="w-full py-4 px-6 rounded-2xl bg-primary text-white font-black hover:bg-primary/90 hover:scale-[1.02] transition-all shadow-xl shadow-primary/20"
+                        disabled={loading}
+                        className="w-full py-4 px-6 rounded-2xl bg-primary text-white font-black hover:bg-primary/90 hover:scale-[1.02] transition-all shadow-xl shadow-primary/20 disabled:opacity-50"
                     >
-                        Entrar no Painel
+                        {loading ? 'Entrando...' : 'Entrar no Painel'}
                     </button>
 
                     <div className="text-center">
@@ -66,9 +94,4 @@ export default function LoginPage() {
             </div>
         </div>
     );
-}
-
-// Inline Link fallback if next/link not yet available in current thought but it is in package.json
-function Link({ href, children, className }: { href: string, children: React.ReactNode, className?: string }) {
-    return <a href={href} className={className}>{children}</a>
 }
