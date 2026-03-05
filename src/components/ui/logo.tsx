@@ -19,13 +19,10 @@ export default function Logo({ className = '', size = 'md' }: LogoProps) {
 
     return (
         <Link href="/" className={`flex items-center group ${className}`}>
-            <Image
+            <img
                 src="/brand/logo-footer.png"
                 alt="Cia da Maleta"
-                width={s.width}
-                height={s.height}
-                className="object-contain"
-                priority
+                style={{ width: s.width, height: s.height, objectFit: 'contain' }}
             />
         </Link>
     );
