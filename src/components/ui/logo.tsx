@@ -20,7 +20,7 @@ export default function Logo({ className = '', size = 'md' }: LogoProps) {
     return (
         <Link href="/" className={`flex items-center group ${className}`}>
             <Image
-                src="/brand/C TRANSP 1.png"
+                src="/brand/C%20TRANSP%201.png"
                 alt="Cia da Maleta"
                 width={s.width}
                 height={s.height}

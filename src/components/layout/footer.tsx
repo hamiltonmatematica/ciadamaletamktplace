@@ -10,7 +10,7 @@ export default function Footer() {
                 <div className="col-span-1 md:col-span-1">
                     <div className="mb-6">
                         <Link href="/">
-                            <Image src="/brand/C TRANSP 1.png" alt="Cia da Maleta" width={150} height={100} className="object-contain" />
+                            <Image src="/brand/C%20TRANSP%201.png" alt="Cia da Maleta" width={150} height={100} className="object-contain" />
                         </Link>
                     </div>
                     <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">

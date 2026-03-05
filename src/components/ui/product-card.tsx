@@ -15,46 +15,64 @@ export default function ProductCard({ product }: ProductCardProps) {
     return (
         <Link
             href={`/produto/${product.slug}`}
-            className="group relative flex flex-col gap-4 rounded-3xl bg-white dark:bg-slate-900 p-3 shadow-sm transition-all hover:shadow-2xl border border-primary/5 hover:border-primary/20 cursor-pointer"
+            className="bg-white dark:bg-slate-900 rounded-[24px] md:rounded-3xl p-2.5 md:p-3 shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-2 md:gap-4 group cursor-pointer transition-all hover:shadow-xl hover:border-primary/20 relative"
         >
-            <div className="relative aspect-square overflow-hidden rounded-2xl bg-background-light">
+            <div className="relative w-full aspect-square rounded-[18px] md:rounded-2xl overflow-hidden bg-background-light">
                 <img
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 md:group-hover:scale-110"
                     alt={product.name}
                     src={mainImage}
                 />
+
                 {product.tag && (
-                    <div className="absolute top-3 left-3">
-                        <span className="rounded-full bg-primary px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg">
+                    <div className="absolute top-2.5 md:top-3 left-2.5 md:left-3">
+                        <span className="rounded-full bg-primary px-2 py-0.5 md:px-3 md:py-1 text-[9px] md:text-[10px] font-bold uppercase tracking-wider text-white shadow-lg">
                             {product.tag}
                         </span>
                     </div>
                 )}
+
+                <button
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); /* TODO: Favorite logic */ }}
+                    className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors z-10 md:hidden"
+                    title="Adicionar aos favoritos"
+                >
+                    <span className="material-symbols-outlined text-[18px] fill-current">favorite</span>
+                </button>
             </div>
 
-            <div className="px-2 pb-2">
-                <h4 className="text-lg font-bold text-slate-900 dark:text-slate-100 group-hover:text-primary transition-colors">{product.name}</h4>
-                <p className="text-sm text-slate-500 font-medium line-clamp-1">{product.description}</p>
+            <div className="px-1.5 md:px-2 pb-1 md:pb-2 flex flex-col gap-1 md:gap-0">
+                <h3 className="font-bold text-sm md:text-lg text-slate-800 dark:text-slate-100 leading-tight line-clamp-2 md:line-clamp-1 min-h-[40px] md:min-h-0 group-hover:text-primary transition-colors">
+                    {product.name}
+                </h3>
+
+                <p className="hidden md:block text-sm text-slate-500 font-medium line-clamp-1">{product.description}</p>
+                <p className="md:hidden text-[11px] text-slate-500 font-medium line-clamp-1">{product.description}</p>
+
                 {product.code && (
-                    <p className="text-xs text-slate-400 mt-1">Código: {product.code}</p>
+                    <p className="text-[10px] md:text-xs text-slate-400 mt-1 md:mt-1">Código: {product.code}</p>
                 )}
-                <div className="mt-3 flex items-center justify-between">
-                    <div>
-                        <span className="text-xl font-black text-primary">R$ {product.price.toFixed(2)}</span>
-                        {product.min_quantity > 1 && (
-                            <span className="text-xs text-slate-400 ml-1">/ cada</span>
-                        )}
+
+                <div className="flex items-center justify-between mt-1 md:mt-3">
+                    <div className="flex flex-col md:flex-row md:items-baseline">
+                        <div className="flex items-baseline gap-1">
+                            <span className="font-black text-primary text-sm md:text-xl">R$ {product.price.toFixed(2)}</span>
+                            {product.min_quantity > 1 && (
+                                <span className="text-[9px] md:text-xs text-slate-400 md:ml-1">/ cada</span>
+                            )}
+                        </div>
                     </div>
                     <button
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); addItem(product); }}
-                        className="rounded-full bg-primary/10 p-2.5 text-primary hover:bg-primary hover:text-white transition-all hover:scale-110 relative z-10"
+                        className="w-8 h-8 md:w-auto md:h-auto shrink-0 rounded-full md:p-2.5 bg-slate-900 md:bg-primary/10 dark:bg-primary md:dark:bg-primary/10 text-white md:text-primary flex items-center justify-center hover:bg-primary hover:text-white transition-colors hover:scale-110 z-10"
                         title="Incluir no orçamento"
                     >
-                        <span className="material-symbols-outlined text-xl">add_shopping_cart</span>
+                        <span className="material-symbols-outlined text-[18px] md:text-xl">add_shopping_cart</span>
                     </button>
                 </div>
+
                 {product.min_quantity > 1 && (
-                    <p className="text-xs text-slate-400 mt-1">Qtd. mínima: {product.min_quantity}</p>
+                    <p className="text-[10px] md:text-xs text-slate-400 mt-1">Qtd. mínima: {product.min_quantity}</p>
                 )}
             </div>
         </Link>

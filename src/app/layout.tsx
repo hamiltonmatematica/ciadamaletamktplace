@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import { QuoteCartProvider } from '@/contexts/quote-cart-context'
 import QuoteCartDrawer from '@/components/ui/quote-cart-drawer'
+import BottomNav from '@/components/layout/bottom-nav'
 
 const jakarta = Plus_Jakarta_Sans({
     subsets: ['latin'],
@@ -25,10 +26,11 @@ export default function RootLayout({
             <head>
                 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block" />
             </head>
-            <body className={`${jakarta.variable} font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 antialiased`}>
+            <body className={`${jakarta.variable} font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 antialiased pb-16 md:pb-0`}>
                 <QuoteCartProvider>
                     {children}
                     <QuoteCartDrawer />
+                    <BottomNav />
                 </QuoteCartProvider>
             </body>
         </html>
