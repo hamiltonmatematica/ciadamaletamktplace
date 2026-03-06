@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 
+import AdminSidebar from '@/components/admin/sidebar';
+
 export default function AdminLayout({
     children,
 }: {
@@ -60,9 +62,20 @@ export default function AdminLayout({
 
     if (!authenticated) return null;
 
+    if (isLoginPage) {
+        return (
+            <div className="min-h-screen bg-background-light dark:bg-background-dark font-display">
+                {children}
+            </div>
+        );
+    }
+
     return (
-        <div className="min-h-screen bg-background-light dark:bg-background-dark font-display">
-            {children}
+        <div className="min-h-screen bg-background-light dark:bg-background-dark font-display flex">
+            <AdminSidebar />
+            <div className="flex-1 h-screen overflow-y-auto">
+                {children}
+            </div>
         </div>
     );
 }
