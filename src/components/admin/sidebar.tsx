@@ -10,11 +10,10 @@ export default function AdminSidebar() {
     const pathname = usePathname();
 
     const handleLogout = async () => {
-        if (!supabase) return;
-        const { error } = await supabase.auth.signOut();
-        if (!error) {
-            window.location.href = '/admin/login';
+        if (supabase) {
+            await supabase.auth.signOut();
         }
+        window.location.href = '/admin/login';
     };
 
     const navItems = [
@@ -46,7 +45,11 @@ export default function AdminSidebar() {
                     );
                 })}
                 <button
-                    onClick={handleLogout}
+                    type="button"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        handleLogout();
+                    }}
                     className="w-full flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-red-400 hover:text-red-300 hover:bg-red-950/30 transition-all mt-4"
                 >
                     <span className="material-symbols-outlined text-xl">logout</span>

@@ -9,7 +9,7 @@ import { useQuoteCart } from '@/contexts/quote-cart-context';
 import { getProductBySlug, getRelatedProducts, incrementProductClick } from '@/lib/data';
 import { Product } from '@/types/database';
 
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5511999999999';
+const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5527998972938';
 
 export default function ProductPage({ params }: { params: { slug: string } }) {
     const [product, setProduct] = useState<Product | null>(null);

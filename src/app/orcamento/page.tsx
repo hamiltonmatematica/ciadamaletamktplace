@@ -5,7 +5,7 @@ import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
 import { useQuoteCart } from '@/contexts/quote-cart-context';
 
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5511999999999';
+const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5527998972938';
 
 export default function OrcamentoPage() {
     const { items, removeItem, updateQuantity, clearCart, total, getWhatsAppMessage, itemCount } = useQuoteCart();

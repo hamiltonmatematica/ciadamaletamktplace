@@ -36,52 +36,52 @@ export default function AdminDashboard() {
     return (
         <main className="flex-1 flex flex-col overflow-hidden bg-background-dark text-slate-100 min-h-screen">
             {/* Header */}
-            <header className="flex items-center justify-between px-8 py-5 border-b border-slate-800 bg-slate-950/50 backdrop-blur-sm">
-                <h1 className="text-2xl font-black">Dashboard</h1>
+            <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 lg:px-8 py-5 border-b border-slate-800 bg-slate-950/50 backdrop-blur-sm gap-4">
+                <h1 className="text-xl lg:text-2xl font-black">Dashboard</h1>
                 <Link
                     href="/admin/produtos/novo"
-                    className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm text-white font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm text-white font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
                 >
                     <span className="material-symbols-outlined text-lg">add</span>
                     Novo Produto
                 </Link>
             </header>
 
-            <div className="flex-1 overflow-y-auto p-8 space-y-8">
+            <div className="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6 lg:space-y-8">
                 {/* Stats */}
-                <div className="grid grid-cols-3 gap-6">
-                    <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+                    <div className="bg-slate-800/50 rounded-2xl p-5 lg:p-6 border border-slate-700/50">
                         <div className="flex items-center gap-3 mb-3">
                             <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
                                 <span className="material-symbols-outlined text-primary">inventory_2</span>
                             </div>
                             <span className="text-sm text-slate-400 font-medium">Total Produtos</span>
                         </div>
-                        <p className="text-3xl font-black">{products.length}</p>
+                        <p className="text-2xl lg:text-3xl font-black">{products.length}</p>
                     </div>
-                    <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
+                    <div className="bg-slate-800/50 rounded-2xl p-5 lg:p-6 border border-slate-700/50">
                         <div className="flex items-center gap-3 mb-3">
                             <div className="w-10 h-10 bg-green-500/10 rounded-xl flex items-center justify-center">
                                 <span className="material-symbols-outlined text-green-400">check_circle</span>
                             </div>
                             <span className="text-sm text-slate-400 font-medium">Ativos</span>
                         </div>
-                        <p className="text-3xl font-black text-green-400">{activeProducts.length}</p>
+                        <p className="text-2xl lg:text-3xl font-black text-green-400">{activeProducts.length}</p>
                     </div>
-                    <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
+                    <div className="bg-slate-800/50 rounded-2xl p-5 lg:p-6 border border-slate-700/50 sm:col-span-2 lg:col-span-1">
                         <div className="flex items-center gap-3 mb-3">
                             <div className="w-10 h-10 bg-yellow-500/10 rounded-xl flex items-center justify-center">
                                 <span className="material-symbols-outlined text-yellow-400">category</span>
                             </div>
                             <span className="text-sm text-slate-400 font-medium">Categorias</span>
                         </div>
-                        <p className="text-3xl font-black text-yellow-400">{categories.length}</p>
+                        <p className="text-2xl lg:text-3xl font-black text-yellow-400">{categories.length}</p>
                     </div>
                 </div>
 
                 {/* Products Table */}
                 <div className="bg-slate-800/30 rounded-2xl border border-slate-700/50 overflow-hidden">
-                    <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700/50">
+                    <div className="flex items-center justify-between px-4 lg:px-6 py-4 border-b border-slate-700/50">
                         <h2 className="font-bold text-lg">Produtos</h2>
                         <span className="text-sm text-slate-400">{products.length} resultados</span>
                     </div>
@@ -89,46 +89,48 @@ export default function AdminDashboard() {
                     {loading ? (
                         <div className="p-8 text-center text-slate-500">Carregando...</div>
                     ) : (
-                        <div className="divide-y divide-slate-700/30">
-                            {products.map((product) => {
-                                const img = product.images?.find(i => i.is_main)?.url || product.images?.[0]?.url || '';
-                                return (
-                                    <div key={product.id} className="flex items-center gap-5 px-6 py-4 hover:bg-slate-800/50 transition-colors">
-                                        <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-700 flex-shrink-0">
-                                            {img && <img src={img} alt={product.name} className="w-full h-full object-cover" />}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h3 className="font-bold text-white truncate">{product.name}</h3>
-                                            <div className="flex items-center gap-3 text-xs text-slate-400 mt-0.5">
-                                                {product.code && <span>{product.code}</span>}
-                                                {product.category && <span className="bg-slate-700/50 px-2 py-0.5 rounded">{product.category.name}</span>}
+                        <div className="divide-y divide-slate-700/30 overflow-x-auto">
+                            <div className="min-w-[600px] sm:min-w-0">
+                                {products.map((product) => {
+                                    const img = product.images?.find(i => i.is_main)?.url || product.images?.[0]?.url || '';
+                                    return (
+                                        <div key={product.id} className="flex items-center gap-3 lg:gap-5 px-4 lg:px-6 py-4 hover:bg-slate-800/50 transition-colors">
+                                            <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-xl overflow-hidden bg-slate-700 flex-shrink-0">
+                                                {img && <img src={img} alt={product.name} className="w-full h-full object-cover" />}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h3 className="font-bold text-sm lg:text-base text-white truncate">{product.name}</h3>
+                                                <div className="flex items-center gap-2 lg:gap-3 text-[10px] lg:text-xs text-slate-400 mt-0.5">
+                                                    {product.code && <span className="truncate max-w-[80px]">{product.code}</span>}
+                                                    {product.category && <span className="bg-slate-700/50 px-2 py-0.5 rounded truncate">{product.category.name}</span>}
+                                                </div>
+                                            </div>
+                                            <div className="text-right flex-shrink-0">
+                                                <p className="font-black text-sm lg:text-base text-primary whitespace-nowrap">R$ {product.price.toFixed(2)}</p>
+                                                <p className="text-[10px] lg:text-xs text-slate-400">Qtd: {product.min_quantity}</p>
+                                            </div>
+                                            <span className={`px-2 lg:px-3 py-1 rounded-full text-[10px] lg:text-xs font-bold flex-shrink-0 hidden xs:inline-block ${product.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
+                                                }`}>
+                                                {product.status === 'active' ? 'Ativo' : 'Rascunho'}
+                                            </span>
+                                            <div className="flex items-center gap-0.5 lg:gap-1 flex-shrink-0">
+                                                <Link
+                                                    href={`/admin/produtos/novo?id=${product.id}`}
+                                                    className="p-1.5 lg:p-2 rounded-lg text-slate-400 hover:text-primary hover:bg-primary/10 transition-all"
+                                                >
+                                                    <span className="material-symbols-outlined text-base lg:text-lg">edit</span>
+                                                </Link>
+                                                <button
+                                                    onClick={() => handleDelete(product.id, product.name)}
+                                                    className="p-1.5 lg:p-2 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                                                >
+                                                    <span className="material-symbols-outlined text-base lg:text-lg">delete</span>
+                                                </button>
                                             </div>
                                         </div>
-                                        <div className="text-right flex-shrink-0">
-                                            <p className="font-black text-primary">R$ {product.price.toFixed(2)}</p>
-                                            <p className="text-xs text-slate-400">Qtd. min: {product.min_quantity}</p>
-                                        </div>
-                                        <span className={`px-3 py-1 rounded-full text-xs font-bold flex-shrink-0 ${product.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
-                                            }`}>
-                                            {product.status === 'active' ? 'Ativo' : 'Rascunho'}
-                                        </span>
-                                        <div className="flex items-center gap-1 flex-shrink-0">
-                                            <Link
-                                                href={`/admin/produtos/novo?id=${product.id}`}
-                                                className="p-2 rounded-lg text-slate-400 hover:text-primary hover:bg-primary/10 transition-all"
-                                            >
-                                                <span className="material-symbols-outlined text-lg">edit</span>
-                                            </Link>
-                                            <button
-                                                onClick={() => handleDelete(product.id, product.name)}
-                                                className="p-2 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all"
-                                            >
-                                                <span className="material-symbols-outlined text-lg">delete</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                                    );
+                                })}
+                            </div>
                         </div>
                     )}
                 </div>

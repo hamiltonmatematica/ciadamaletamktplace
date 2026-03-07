@@ -19,7 +19,7 @@ interface QuoteCartContextType {
 const QuoteCartContext = createContext<QuoteCartContextType | undefined>(undefined);
 
 const STORAGE_KEY = 'cia-maleta-quote-cart';
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5511999999999';
+const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5527998972938';
 
 export function QuoteCartProvider({ children }: { children: React.ReactNode }) {
     const [items, setItems] = useState<QuoteCartItem[]>([]);
