@@ -75,24 +75,13 @@ export async function getProducts(categorySlug?: string): Promise<Product[]> {
     }
     const { data, error } = await query;
     if (error) { console.error(error); return []; }
-    if (!data || data.length === 0) return getProductsMock(categorySlug);
     return data || [];
-}
-
-function getProductsMock(categorySlug?: string): Product[] {
-    let products = MOCK_PRODUCTS.filter(p => p.status === 'active');
-    if (categorySlug) {
-        const cat = MOCK_CATEGORIES.find(c => c.slug === categorySlug);
-        if (cat) products = products.filter(p => p.category_id === cat.id);
-    }
-    return products;
 }
 
 export async function getFeaturedProducts(): Promise<Product[]> {
     if (!isSupabaseConfigured) return MOCK_PRODUCTS.filter(p => p.featured);
     const { data, error } = await supabase!.from('products').select('*, category:categories(*), images:product_images(*)').eq('featured', true).eq('status', 'active').order('created_at', { ascending: false });
     if (error) { console.error(error); return []; }
-    if (!data || data.length === 0) return MOCK_PRODUCTS.filter(p => p.featured);
     return data || [];
 }
 
@@ -100,7 +89,6 @@ export async function getAllProducts(): Promise<Product[]> {
     if (!isSupabaseConfigured) return MOCK_PRODUCTS;
     const { data, error } = await supabase!.from('products').select('*, category:categories(*), images:product_images(*)').order('created_at', { ascending: false });
     if (error) { console.error(error); return []; }
-    if (!data || data.length === 0) return MOCK_PRODUCTS;
     return data || [];
 }
 
