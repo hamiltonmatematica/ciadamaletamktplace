@@ -1,13 +1,45 @@
-'use client';
-
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Logo from '@/components/ui/logo';
 import { useQuoteCart } from '@/contexts/quote-cart-context';
+import { searchProducts } from '@/lib/data';
+import { Product } from '@/types/database';
 
 export default function Header() {
     const { itemCount, setIsOpen } = useQuoteCart();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState<Product[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [showResults, setShowResults] = useState(false);
+    const searchRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+                setShowResults(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    useEffect(() => {
+        const delayDebounceFn = setTimeout(async () => {
+            if (searchQuery.length >= 2) {
+                setIsSearching(true);
+                const results = await searchProducts(searchQuery);
+                setSearchResults(results);
+                setIsSearching(false);
+                setShowResults(true);
+            } else {
+                setSearchResults([]);
+                setShowResults(false);
+            }
+        }, 300);
+
+        return () => clearTimeout(delayDebounceFn);
+    }, [searchQuery]);
 
     return (
         <header className="sticky top-0 z-50 w-full border-b border-primary/10 bg-white/95 backdrop-blur-md dark:bg-background-dark/95">
@@ -23,15 +55,66 @@ export default function Header() {
 
                     <div className="hidden md:flex items-center gap-10">
                         <Logo />
-                        <div className="relative group">
+                        <div className="relative group" ref={searchRef}>
                             <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                                <span className="material-symbols-outlined text-primary/60">search</span>
+                                <span className={`material-symbols-outlined ${isSearching ? 'animate-spin' : 'text-primary/60'}`}>
+                                    {isSearching ? 'progress_activity' : 'search'}
+                                </span>
                             </div>
                             <input
-                                className="block w-80 rounded-full border-0 bg-primary/5 py-2.5 pl-11 pr-4 text-sm focus:ring-2 focus:ring-primary/20 placeholder:text-slate-400 transition-all"
-                                placeholder="Pesquisar produtos..."
+                                className="block w-96 rounded-full border-0 bg-primary/5 py-2.5 pl-11 pr-4 text-sm focus:ring-2 focus:ring-primary/20 placeholder:text-slate-400 transition-all outline-none"
+                                placeholder="Pesquisar produtos, códigos..."
                                 type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onFocus={() => searchQuery.length >= 2 && setShowResults(true)}
                             />
+
+                            {/* Search Results Dropdown */}
+                            {showResults && (
+                                <div className="absolute top-full left-0 w-full mt-2 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                    <div className="max-h-[70vh] overflow-y-auto p-2 space-y-1">
+                                        {searchResults.length > 0 ? (
+                                            searchResults.map((product) => (
+                                                <Link
+                                                    key={product.id}
+                                                    href={`/produto/${product.slug}`}
+                                                    onClick={() => setShowResults(false)}
+                                                    className="flex items-center gap-4 p-2 rounded-xl hove:bg-primary/5 transition-all group"
+                                                >
+                                                    <div className="w-14 h-14 rounded-lg overflow-hidden bg-slate-100 flex-shrink-0">
+                                                        <img
+                                                            src={product.images?.[0]?.url || ''}
+                                                            alt={product.name}
+                                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                                                        />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate group-hover:text-primary transition-colors">
+                                                            {product.name}
+                                                        </h4>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-[10px] text-slate-400 font-medium">{product.code}</span>
+                                                            <span className="text-[10px] text-primary font-black">R$ {product.price.toFixed(2)}</span>
+                                                        </div>
+                                                    </div>
+                                                    <span className="material-symbols-outlined text-slate-300 text-sm group-hover:translate-x-1 transition-transform">chevron_right</span>
+                                                </Link>
+                                            ))
+                                        ) : (
+                                            <div className="py-8 text-center">
+                                                <span className="material-symbols-outlined text-slate-300 text-4xl mb-2">search_off</span>
+                                                <p className="text-sm text-slate-500 font-medium">Nenhum resultado para "{searchQuery}"</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                    {searchResults.length > 0 && (
+                                        <div className="bg-slate-50 dark:bg-slate-800/50 p-3 text-center border-t border-slate-100 dark:border-slate-800">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Mostrando os {searchResults.length} itens mais relevantes</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

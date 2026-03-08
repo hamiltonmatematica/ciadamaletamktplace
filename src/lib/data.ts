@@ -165,6 +165,25 @@ export async function getMostClickedProducts(limit: number = 20): Promise<Produc
     return data || [];
 }
 
+export async function searchProducts(query: string): Promise<Product[]> {
+    if (!query) return [];
+    if (!isSupabaseConfigured) {
+        return MOCK_PRODUCTS.filter(p =>
+            p.name.toLowerCase().includes(query.toLowerCase()) ||
+            p.description?.toLowerCase().includes(query.toLowerCase())
+        ).slice(0, 10);
+    }
+    const { data, error } = await supabase!
+        .from('products')
+        .select('*, category:categories(*), images:product_images(*)')
+        .eq('status', 'active')
+        .or(`name.ilike.%${query}%,code.ilike.%${query}%,description.ilike.%${query}%`)
+        .limit(10);
+
+    if (error) { console.error(error); return []; }
+    return data || [];
+}
+
 export interface CreateProductInput extends Partial<Product> {
     imageUrls?: string[];
 }
@@ -265,12 +284,17 @@ export async function uploadProductImage(file: File): Promise<{ publicUrl: strin
 
     try {
         const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
-        const filePath = `${fileName}`; // Removendo o prefixo 'products/' pois entraremos no bucket 'products'
+        // Usar um nome limpo sem caracteres especiais
+        const cleanName = file.name.split('.')[0].replace(/[^a-zA-Z0-9]/g, '-');
+        const fileName = `${cleanName}-${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+        const filePath = fileName;
 
         const { error: uploadError } = await supabase!.storage
             .from('products')
-            .upload(filePath, file);
+            .upload(filePath, file, {
+                cacheControl: '3600',
+                upsert: false
+            });
 
         if (uploadError) {
             console.error('Erro ao fazer upload:', uploadError);
@@ -281,7 +305,10 @@ export async function uploadProductImage(file: File): Promise<{ publicUrl: strin
             .from('products')
             .getPublicUrl(filePath);
 
-        return { publicUrl, error: null };
+        // Adicionar um timestamp para evitar cache de imagem antiga se houver
+        const finalUrl = `${publicUrl}?t=${Date.now()}`;
+
+        return { publicUrl: finalUrl, error: null };
     } catch (err: any) {
         return { publicUrl: null, error: err.message || 'Erro desconhecido no upload' };
     }
