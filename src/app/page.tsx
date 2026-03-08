@@ -67,10 +67,10 @@ export default function Home() {
                             <p className="mb-6 sm:mb-8 text-sm sm:text-lg font-medium text-slate-200 lg:text-xl hidden sm:block">
                                 Descubra nossa coleção exclusiva de maletas e kits de festa personalizados para tornar cada celebração inesquecível.
                             </p>
-                            <button className="group inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 sm:px-8 sm:py-4 text-sm sm:text-lg font-bold text-white shadow-xl shadow-primary/30 hover:bg-primary/90 hover:scale-105 transition-all">
+                            <Link href="/catalogo" className="group inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 sm:px-8 sm:py-4 text-sm sm:text-lg font-bold text-white shadow-xl shadow-primary/30 hover:bg-primary/90 hover:scale-105 transition-all">
                                 Ver Coleção
                                 <span className="material-symbols-outlined text-lg sm:text-2xl group-hover:translate-x-1 transition-transform">arrow_forward</span>
-                            </button>
+                            </Link>
                         </div>
                     </div>
                 </section>
