@@ -111,11 +111,11 @@ export default function NovoProdutoPage() {
 
             for (const img of images) {
                 if (img.file) {
-                    const uploadedUrl = await uploadProductImage(img.file);
-                    if (uploadedUrl) {
-                        finalImageUrls.push(uploadedUrl);
+                    const { publicUrl, error: uploadErr } = await uploadProductImage(img.file);
+                    if (publicUrl) {
+                        finalImageUrls.push(publicUrl);
                     } else {
-                        throw new Error(`Falha no upload de uma das imagens.`);
+                        throw new Error(`Erro no upload da foto: ${uploadErr || 'Verifique se o bucket "products" existe no Supabase.'}`);
                     }
                 } else {
                     finalImageUrls.push(img.url);

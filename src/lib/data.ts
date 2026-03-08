@@ -258,30 +258,33 @@ export async function updateProduct(id: string, updates: Partial<Product> & { im
     return { data: updatedProduct, error: null };
 }
 
-export async function uploadProductImage(file: File): Promise<string | null> {
+export async function uploadProductImage(file: File): Promise<{ publicUrl: string | null; error: string | null }> {
     if (!isSupabaseConfigured) {
-        // Mock upload: retorna um blob URL local para testes sem Supabase
-        return URL.createObjectURL(file);
+        return { publicUrl: URL.createObjectURL(file), error: null };
     }
 
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
-    const filePath = `products/${fileName}`;
+    try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+        const filePath = `${fileName}`; // Removendo o prefixo 'products/' pois entraremos no bucket 'products'
 
-    const { error: uploadError } = await supabase!.storage
-        .from('products')
-        .upload(filePath, file);
+        const { error: uploadError } = await supabase!.storage
+            .from('products')
+            .upload(filePath, file);
 
-    if (uploadError) {
-        console.error('Erro ao fazer upload:', uploadError.message);
-        return null;
+        if (uploadError) {
+            console.error('Erro ao fazer upload:', uploadError);
+            return { publicUrl: null, error: `Supabase Storage: ${uploadError.message}` };
+        }
+
+        const { data: { publicUrl } } = supabase!.storage
+            .from('products')
+            .getPublicUrl(filePath);
+
+        return { publicUrl, error: null };
+    } catch (err: any) {
+        return { publicUrl: null, error: err.message || 'Erro desconhecido no upload' };
     }
-
-    const { data: { publicUrl } } = supabase!.storage
-        .from('products')
-        .getPublicUrl(filePath);
-
-    return publicUrl;
 }
 
 export async function deleteProduct(id: string): Promise<boolean> {
