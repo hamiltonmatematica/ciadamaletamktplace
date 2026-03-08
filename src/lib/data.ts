@@ -165,33 +165,97 @@ export async function getMostClickedProducts(limit: number = 20): Promise<Produc
     return data || [];
 }
 
-export async function createProduct(product: Partial<Product>): Promise<Product | null> {
+export interface CreateProductInput extends Partial<Product> {
+    imageUrls?: string[];
+}
+
+export async function createProduct(product: CreateProductInput): Promise<Product | null> {
+    const { imageUrls, ...productData } = product;
+
     if (!isSupabaseConfigured) {
         const newP: Product = {
-            id: Date.now().toString(), name: product.name || '', slug: product.slug || '', code: product.code || null,
-            description: product.description || null, price: product.price || 0, min_quantity: product.min_quantity || 1,
-            category_id: product.category_id || null, status: product.status || 'active', featured: product.featured || false,
-            tag: product.tag || null, production_time: product.production_time || null, click_count: 0,
+            id: Date.now().toString(), name: productData.name || '', slug: productData.slug || '', code: productData.code || null,
+            description: productData.description || null, price: productData.price || 0, min_quantity: productData.min_quantity || 1,
+            category_id: productData.category_id || null, status: productData.status || 'active', featured: productData.featured || false,
+            tag: productData.tag || null, production_time: productData.production_time || null, click_count: 0,
             created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
-            images: [],
+            images: imageUrls?.map((url, i) => ({ id: Math.random().toString(), product_id: '', url, sort_order: i, is_main: i === 0 })) || [],
         };
         MOCK_PRODUCTS.push(newP);
         return newP;
     }
-    const { data, error } = await supabase!.from('products').insert(product).select().single();
-    if (error) { console.error(error); return null; }
-    return data;
-}
 
-export async function updateProduct(id: string, updates: Partial<Product>): Promise<Product | null> {
-    if (!isSupabaseConfigured) {
-        const idx = MOCK_PRODUCTS.findIndex(p => p.id === id);
-        if (idx >= 0) { Object.assign(MOCK_PRODUCTS[idx], updates, { updated_at: new Date().toISOString() }); return MOCK_PRODUCTS[idx]; }
+    // 1. Inserir o produto
+    const { data: newProduct, error: pError } = await supabase!.from('products').insert(productData).select().single();
+
+    if (pError) {
+        console.error('Erro ao criar produto:', pError.message, pError.details);
         return null;
     }
-    const { data, error } = await supabase!.from('products').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id).select().single();
-    if (error) { console.error(error); return null; }
-    return data;
+
+    // 2. Inserir as imagens, se houver
+    if (imageUrls && imageUrls.length > 0 && newProduct) {
+        const imagesToInsert = imageUrls.map((url, index) => ({
+            product_id: newProduct.id,
+            url,
+            sort_order: index,
+            is_main: index === 0
+        }));
+
+        const { error: iError } = await supabase!.from('product_images').insert(imagesToInsert);
+        if (iError) console.error('Erro ao inserir imagens:', iError.message);
+    }
+
+    return newProduct;
+}
+
+export async function updateProduct(id: string, updates: Partial<Product> & { imageUrls?: string[] }): Promise<Product | null> {
+    const { imageUrls, ...productUpdates } = updates;
+
+    if (!isSupabaseConfigured) {
+        const idx = MOCK_PRODUCTS.findIndex(p => p.id === id);
+        if (idx >= 0) {
+            Object.assign(MOCK_PRODUCTS[idx], productUpdates, { updated_at: new Date().toISOString() });
+            if (imageUrls) {
+                MOCK_PRODUCTS[idx].images = imageUrls.map((url, i) => ({ id: Math.random().toString(), product_id: id, url, sort_order: i, is_main: i === 0 }));
+            }
+            return MOCK_PRODUCTS[idx];
+        }
+        return null;
+    }
+
+    // 1. Atualizar produto
+    const { data: updatedProduct, error: pError } = await supabase!
+        .from('products')
+        .update({ ...productUpdates, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (pError) {
+        console.error('Erro ao atualizar produto:', pError.message);
+        return null;
+    }
+
+    // 2. Se enviou novas imagens, substituir as antigas (abordagem simples para MVP)
+    if (imageUrls && updatedProduct) {
+        // Deletar antigas
+        await supabase!.from('product_images').delete().eq('product_id', id);
+
+        // Inserir novas
+        if (imageUrls.length > 0) {
+            const imagesToInsert = imageUrls.map((url, index) => ({
+                product_id: id,
+                url,
+                sort_order: index,
+                is_main: index === 0
+            }));
+            const { error: iError } = await supabase!.from('product_images').insert(imagesToInsert);
+            if (iError) console.error('Erro ao inserir novas imagens:', iError.message);
+        }
+    }
+
+    return updatedProduct;
 }
 
 export async function deleteProduct(id: string): Promise<boolean> {

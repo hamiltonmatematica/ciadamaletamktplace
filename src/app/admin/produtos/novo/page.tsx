@@ -1,13 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createProduct, getAllCategories } from '@/lib/data';
-import { Category } from '@/types/database';
+import { createProduct, updateProduct, getAllCategories, getAllProducts } from '@/lib/data';
+import { Category, Product } from '@/types/database';
 
 export default function NovoProdutoPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const productId = searchParams.get('id');
+    const isEditing = !!productId;
+
     const [categories, setCategories] = useState<Category[]>([]);
     const [saving, setSaving] = useState(false);
 
@@ -22,14 +26,37 @@ export default function NovoProdutoPage() {
     const [featured, setFeatured] = useState(false);
     const [tag, setTag] = useState('');
     const [productionTime, setProductionTime] = useState('');
+    const [imageUrls, setImageUrls] = useState<string[]>(['']);
+    const [errorMsg, setErrorMsg] = useState('');
 
     useEffect(() => {
         async function load() {
             const cats = await getAllCategories();
             setCategories(cats);
+
+            if (productId) {
+                const products = await getAllProducts();
+                const product = products.find(p => p.id === productId);
+                if (product) {
+                    setName(product.name);
+                    setSlug(product.slug);
+                    setCode(product.code || '');
+                    setDescription(product.description || '');
+                    setPrice(product.price.toString());
+                    setMinQuantity(product.min_quantity.toString());
+                    setCategoryId(product.category_id || '');
+                    setStatus(product.status);
+                    setFeatured(product.featured);
+                    setTag(product.tag || '');
+                    setProductionTime(product.production_time || '');
+                    if (product.images && product.images.length > 0) {
+                        setImageUrls(product.images.map(img => img.url));
+                    }
+                }
+            }
         }
         load();
-    }, []);
+    }, [productId]);
 
     const generateSlug = (text: string) => {
         return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -38,20 +65,48 @@ export default function NovoProdutoPage() {
     const handleNameChange = (value: string) => {
         setName(value);
         setSlug(generateSlug(value));
+        setErrorMsg('');
+    };
+
+    const addImageUrl = () => setImageUrls([...imageUrls, '']);
+    const removeImageUrl = (index: number) => {
+        const newUrls = imageUrls.filter((_, i) => i !== index);
+        setImageUrls(newUrls.length ? newUrls : ['']);
+    };
+    const updateImageUrl = (index: number, value: string) => {
+        const newUrls = [...imageUrls];
+        newUrls[index] = value;
+        setImageUrls(newUrls);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setErrorMsg('');
         setSaving(true);
 
-        await createProduct({
+        const validImageUrls = imageUrls.filter(url => url.trim() !== '');
+
+        const productData = {
             name, slug, code: code || null, description: description || null,
             price: parseFloat(price) || 0, min_quantity: parseInt(minQuantity) || 1,
             category_id: categoryId || null, status, featured,
             tag: tag || null, production_time: productionTime || null,
-        });
+            imageUrls: validImageUrls
+        };
 
-        router.push('/admin');
+        let result;
+        if (isEditing && productId) {
+            result = await updateProduct(productId, productData);
+        } else {
+            result = await createProduct(productData);
+        }
+
+        if (result) {
+            router.push('/admin');
+        } else {
+            setErrorMsg(`Erro ao ${isEditing ? 'atualizar' : 'cadastrar'} produto. Verifique se todos os campos estão corretos.`);
+            setSaving(false);
+        }
     };
 
     return (
@@ -61,8 +116,14 @@ export default function NovoProdutoPage() {
                     <span className="material-symbols-outlined text-sm">arrow_back</span>
                     Voltar ao Dashboard
                 </Link>
-                <h1 className="text-3xl font-black text-white">Novo Produto</h1>
+                <h1 className="text-3xl font-black text-white">{isEditing ? 'Editar Produto' : 'Novo Produto'}</h1>
             </div>
+
+            {errorMsg && (
+                <div className="mb-6 bg-red-500/20 border border-red-500/50 text-red-400 px-4 py-3 rounded-xl font-medium">
+                    {errorMsg}
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className="max-w-3xl space-y-6">
                 {/* Informações Básicas */}
@@ -107,6 +168,50 @@ export default function NovoProdutoPage() {
                                 placeholder="Descreva o produto em detalhes..."
                             />
                         </div>
+                    </div>
+                </div>
+
+                {/* Imagens do Produto */}
+                <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700 space-y-5">
+                    <div className="flex items-center justify-between">
+                        <h2 className="font-bold text-lg text-white flex items-center gap-2">
+                            <span className="material-symbols-outlined text-primary">image</span>
+                            Imagens do Produto
+                        </h2>
+                        <button
+                            type="button" onClick={addImageUrl}
+                            className="text-xs font-bold text-primary hover:text-white transition-colors flex items-center gap-1"
+                        >
+                            <span className="material-symbols-outlined text-sm">add</span>
+                            Adicionar Foto
+                        </button>
+                    </div>
+
+                    <p className="text-xs text-slate-400">Insira os links das imagens. A primeira será a principal.</p>
+
+                    <div className="space-y-3">
+                        {imageUrls.map((url, index) => (
+                            <div key={index} className="flex gap-2">
+                                <div className="relative flex-1">
+                                    <input
+                                        type="url" value={url} onChange={(e) => updateImageUrl(index, e.target.value)}
+                                        className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl px-4 py-3 text-white focus:border-primary focus:ring-0 transition-colors outline-none text-sm"
+                                        placeholder="https://exemplo.com/foto.jpg"
+                                    />
+                                    {url && (
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg overflow-hidden border border-slate-700">
+                                            <img src={url} alt="Previa" className="w-full h-full object-cover" />
+                                        </div>
+                                    )}
+                                </div>
+                                <button
+                                    type="button" onClick={() => removeImageUrl(index)}
+                                    className="p-3 text-slate-500 hover:text-red-500 transition-colors"
+                                >
+                                    <span className="material-symbols-outlined">delete</span>
+                                </button>
+                            </div>
+                        ))}
                     </div>
                 </div>
 
@@ -210,7 +315,7 @@ export default function NovoProdutoPage() {
                         className="inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3 text-white font-bold hover:bg-primary/90 transition-all disabled:opacity-50 shadow-lg shadow-primary/20"
                     >
                         <span className="material-symbols-outlined">{saving ? 'hourglass_empty' : 'save'}</span>
-                        {saving ? 'Salvando...' : 'Criar Produto'}
+                        {saving ? 'Salvando...' : (isEditing ? 'Salvar Alterações' : 'Criar Produto')}
                     </button>
                     <Link
                         href="/admin"
