@@ -169,7 +169,7 @@ export interface CreateProductInput extends Partial<Product> {
     imageUrls?: string[];
 }
 
-export async function createProduct(product: CreateProductInput): Promise<Product | null> {
+export async function createProduct(product: CreateProductInput): Promise<{ data: Product | null; error: string | null }> {
     const { imageUrls, ...productData } = product;
 
     if (!isSupabaseConfigured) {
@@ -182,15 +182,15 @@ export async function createProduct(product: CreateProductInput): Promise<Produc
             images: imageUrls?.map((url, i) => ({ id: Math.random().toString(), product_id: '', url, sort_order: i, is_main: i === 0 })) || [],
         };
         MOCK_PRODUCTS.push(newP);
-        return newP;
+        return { data: newP, error: null };
     }
 
     // 1. Inserir o produto
     const { data: newProduct, error: pError } = await supabase!.from('products').insert(productData).select().single();
 
     if (pError) {
-        console.error('Erro ao criar produto:', pError.message, pError.details);
-        return null;
+        console.error('Erro ao criar produto:', pError);
+        return { data: null, error: pError.message };
     }
 
     // 2. Inserir as imagens, se houver
@@ -206,10 +206,10 @@ export async function createProduct(product: CreateProductInput): Promise<Produc
         if (iError) console.error('Erro ao inserir imagens:', iError.message);
     }
 
-    return newProduct;
+    return { data: newProduct, error: null };
 }
 
-export async function updateProduct(id: string, updates: Partial<Product> & { imageUrls?: string[] }): Promise<Product | null> {
+export async function updateProduct(id: string, updates: Partial<Product> & { imageUrls?: string[] }): Promise<{ data: Product | null; error: string | null }> {
     const { imageUrls, ...productUpdates } = updates;
 
     if (!isSupabaseConfigured) {
@@ -219,9 +219,9 @@ export async function updateProduct(id: string, updates: Partial<Product> & { im
             if (imageUrls) {
                 MOCK_PRODUCTS[idx].images = imageUrls.map((url, i) => ({ id: Math.random().toString(), product_id: id, url, sort_order: i, is_main: i === 0 }));
             }
-            return MOCK_PRODUCTS[idx];
+            return { data: MOCK_PRODUCTS[idx], error: null };
         }
-        return null;
+        return { data: null, error: 'Produto não encontrado' };
     }
 
     // 1. Atualizar produto
@@ -233,8 +233,8 @@ export async function updateProduct(id: string, updates: Partial<Product> & { im
         .single();
 
     if (pError) {
-        console.error('Erro ao atualizar produto:', pError.message);
-        return null;
+        console.error('Erro ao atualizar produto:', pError);
+        return { data: null, error: pError.message };
     }
 
     // 2. Se enviou novas imagens, substituir as antigas (abordagem simples para MVP)
@@ -255,7 +255,7 @@ export async function updateProduct(id: string, updates: Partial<Product> & { im
         }
     }
 
-    return updatedProduct;
+    return { data: updatedProduct, error: null };
 }
 
 export async function uploadProductImage(file: File): Promise<string | null> {

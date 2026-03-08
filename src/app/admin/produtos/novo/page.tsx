@@ -26,8 +26,8 @@ export default function NovoProdutoPage() {
     const [featured, setFeatured] = useState(false);
     const [tag, setTag] = useState('');
     const [productionTime, setProductionTime] = useState('');
-    const [imageUrls, setImageUrls] = useState<string[]>([]);
-    const [imageFiles, setImageFiles] = useState<File[]>([]);
+    // Imagens agora são objetos para manter a relação URL/Arquivo e permitir ordenação
+    const [images, setImages] = useState<{ url: string; file?: File }[]>([]);
     const [uploading, setUploading] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
 
@@ -37,8 +37,8 @@ export default function NovoProdutoPage() {
             setCategories(cats);
 
             if (productId) {
-                const products = await getAllProducts();
-                const product = products.find(p => p.id === productId);
+                const results = await getAllProducts();
+                const product = results.find(p => p.id === productId);
                 if (product) {
                     setName(product.name);
                     setSlug(product.slug);
@@ -52,7 +52,7 @@ export default function NovoProdutoPage() {
                     setTag(product.tag || '');
                     setProductionTime(product.production_time || '');
                     if (product.images && product.images.length > 0) {
-                        setImageUrls(product.images.map(img => img.url));
+                        setImages(product.images.sort((a, b) => a.sort_order - b.sort_order).map(img => ({ url: img.url })));
                     }
                 }
             }
@@ -73,17 +73,31 @@ export default function NovoProdutoPage() {
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             const files = Array.from(e.target.files);
-            setImageFiles(prev => [...prev, ...files]);
-
-            // Criar URLs temporários para preview local
-            const previews = files.map(file => URL.createObjectURL(file));
-            setImageUrls(prev => [...prev, ...previews]);
+            const newImages = files.map(file => ({
+                url: URL.createObjectURL(file),
+                file
+            }));
+            setImages(prev => [...prev, ...newImages]);
         }
     };
 
     const removeImage = (index: number) => {
-        setImageUrls(prev => prev.filter((_, i) => i !== index));
-        setImageFiles(prev => prev.filter((_, i) => i !== index));
+        setImages(prev => {
+            const item = prev[index];
+            if (item.url.startsWith('blob:')) {
+                URL.revokeObjectURL(item.url);
+            }
+            return prev.filter((_, i) => i !== index);
+        });
+    };
+
+    const moveImage = (index: number, direction: 'left' | 'right') => {
+        const newImages = [...images];
+        const newIndex = direction === 'left' ? index - 1 : index + 1;
+        if (newIndex < 0 || newIndex >= images.length) return;
+
+        [newImages[index], newImages[newIndex]] = [newImages[newIndex], newImages[index]];
+        setImages(newImages);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -93,22 +107,18 @@ export default function NovoProdutoPage() {
         setUploading(true);
 
         try {
-            // Fazer upload de todas as imagens que são novas (File objects)
             const finalImageUrls: string[] = [];
 
-            for (let i = 0; i < imageUrls.length; i++) {
-                const url = imageUrls[i];
-                // Se o URL começa com 'blob:', é um arquivo local que precisa de upload
-                if (url.startsWith('blob:')) {
-                    const file = imageFiles.find(f => URL.createObjectURL(f).split('/').pop() === url.split('/').pop()) || imageFiles[0]; // fallback heurístico simplificado
-                    // Nota: A lógica acima de encontrar o arquivo exato pode falhar, 
-                    // uma alternativa mais robusta:
-                    const fileIndex = imageUrls.slice(0, i + 1).filter(u => u.startsWith('blob:')).length - 1;
-                    const uploadedUrl = await uploadProductImage(imageFiles[fileIndex]);
-                    if (uploadedUrl) finalImageUrls.push(uploadedUrl);
+            for (const img of images) {
+                if (img.file) {
+                    const uploadedUrl = await uploadProductImage(img.file);
+                    if (uploadedUrl) {
+                        finalImageUrls.push(uploadedUrl);
+                    } else {
+                        throw new Error(`Falha no upload de uma das imagens.`);
+                    }
                 } else {
-                    // Já é um URL remoto (edição)
-                    finalImageUrls.push(url);
+                    finalImageUrls.push(img.url);
                 }
             }
 
@@ -120,21 +130,18 @@ export default function NovoProdutoPage() {
                 imageUrls: finalImageUrls
             };
 
-            let result;
-            if (isEditing && productId) {
-                result = await updateProduct(productId, productData);
-            } else {
-                result = await createProduct(productData);
-            }
+            const { data: result, error } = isEditing && productId
+                ? await updateProduct(productId, productData)
+                : await createProduct(productData);
 
-            if (result) {
+            if (result && !error) {
                 router.push('/admin');
             } else {
-                setErrorMsg(`Erro ao ${isEditing ? 'atualizar' : 'cadastrar'} produto. Verifique se todos os campos estão corretos.`);
+                setErrorMsg(error || `Erro ao ${isEditing ? 'atualizar' : 'cadastrar'} produto.`);
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            setErrorMsg('Erro inesperado ao processar imagens ou salvar produto.');
+            setErrorMsg(err.message || 'Erro inesperado ao processar imagens ou salvar produto.');
         } finally {
             setSaving(false);
             setUploading(false);
@@ -152,14 +159,18 @@ export default function NovoProdutoPage() {
             </div>
 
             {errorMsg && (
-                <div className="mb-6 bg-red-500/20 border border-red-500/50 text-red-400 px-4 py-3 rounded-xl font-medium">
-                    {errorMsg}
+                <div className="mb-6 bg-red-500/20 border-2 border-red-500/50 text-red-500 px-6 py-4 rounded-2xl font-bold flex items-center gap-3">
+                    <span className="material-symbols-outlined">error</span>
+                    <div>
+                        <p className="text-sm opacity-70">Não foi possível salvar:</p>
+                        <p>{errorMsg}</p>
+                    </div>
                 </div>
             )}
 
             <form onSubmit={handleSubmit} className="max-w-3xl space-y-6">
                 {/* Informações Básicas */}
-                <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700 space-y-5">
+                <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700 space-y-5 shadow-xl">
                     <h2 className="font-bold text-lg text-white flex items-center gap-2">
                         <span className="material-symbols-outlined text-primary">info</span>
                         Informações Básicas
@@ -170,7 +181,7 @@ export default function NovoProdutoPage() {
                             <label className="block text-sm font-bold text-slate-300 mb-2">Nome do Produto *</label>
                             <input
                                 type="text" value={name} onChange={(e) => handleNameChange(e.target.value)} required
-                                className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl px-4 py-3 text-white focus:border-primary focus:ring-0 transition-colors"
+                                className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl px-4 py-3 text-white focus:border-primary focus:ring-0 transition-colors outline-none"
                                 placeholder="Ex: Convite Caixa com Visor"
                             />
                         </div>
@@ -179,7 +190,7 @@ export default function NovoProdutoPage() {
                             <label className="block text-sm font-bold text-slate-300 mb-2">Código</label>
                             <input
                                 type="text" value={code} onChange={(e) => setCode(e.target.value)}
-                                className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl px-4 py-3 text-white focus:border-primary focus:ring-0 transition-colors"
+                                className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl px-4 py-3 text-white focus:border-primary focus:ring-0 transition-colors outline-none"
                                 placeholder="Ex: CCX_022_30"
                             />
                         </div>
@@ -188,7 +199,7 @@ export default function NovoProdutoPage() {
                             <label className="block text-sm font-bold text-slate-300 mb-2">Slug (URL)</label>
                             <input
                                 type="text" value={slug} onChange={(e) => setSlug(e.target.value)} required
-                                className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl px-4 py-3 text-white focus:border-primary focus:ring-0 transition-colors"
+                                className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl px-4 py-3 text-white focus:border-primary focus:ring-0 transition-colors outline-none"
                             />
                         </div>
 
@@ -196,7 +207,7 @@ export default function NovoProdutoPage() {
                             <label className="block text-sm font-bold text-slate-300 mb-2">Descrição</label>
                             <textarea
                                 value={description} onChange={(e) => setDescription(e.target.value)} rows={4}
-                                className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl px-4 py-3 text-white focus:border-primary focus:ring-0 transition-colors resize-none"
+                                className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl px-4 py-3 text-white focus:border-primary focus:ring-0 transition-colors resize-none outline-none"
                                 placeholder="Descreva o produto em detalhes..."
                             />
                         </div>
@@ -204,13 +215,13 @@ export default function NovoProdutoPage() {
                 </div>
 
                 {/* Imagens do Produto */}
-                <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700 space-y-5">
+                <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700 space-y-5 shadow-xl">
                     <div className="flex items-center justify-between">
                         <h2 className="font-bold text-lg text-white flex items-center gap-2">
                             <span className="material-symbols-outlined text-primary">image</span>
                             Imagens do Produto
                         </h2>
-                        <label className="cursor-pointer inline-flex items-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary px-4 py-2 rounded-xl text-sm font-bold transition-all">
+                        <label className="cursor-pointer inline-flex items-center gap-2 bg-primary px-4 py-2 rounded-xl text-sm text-white font-bold transition-all hover:bg-primary/90 shadow-lg shadow-primary/20">
                             <span className="material-symbols-outlined text-lg">add_a_photo</span>
                             Escolher Fotos
                             <input
@@ -223,21 +234,39 @@ export default function NovoProdutoPage() {
                         </label>
                     </div>
 
-                    <p className="text-xs text-slate-400">Arraste e solte ou escolha arquivos do seu computador. A primeira imagem será a principal.</p>
+                    <p className="text-xs text-slate-400">Arraste para organizar. A primeira foto à esquerda será a principal.</p>
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {imageUrls.map((url, index) => (
-                            <div key={index} className="group relative aspect-square bg-slate-900 rounded-2xl overflow-hidden border-2 border-slate-700 hover:border-primary transition-all">
-                                <img src={url} alt="Produto" className="w-full h-full object-cover" />
+                        {images.map((img, index) => (
+                            <div key={index} className="group relative aspect-square bg-slate-900 rounded-2xl overflow-hidden border-2 border-slate-700 hover:border-primary transition-all shadow-md">
+                                <img src={img.url} alt={`Preview ${index}`} className="w-full h-full object-cover" />
+
                                 {index === 0 && (
-                                    <div className="absolute top-2 left-2 bg-primary text-[10px] font-black px-2 py-0.5 rounded shadow-lg uppercase tracking-wider">
+                                    <div className="absolute top-2 left-2 bg-primary text-[10px] font-black px-2 py-0.5 rounded shadow-lg uppercase tracking-wider text-white">
                                         Principal
                                     </div>
                                 )}
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+
+                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3">
+                                    <div className="flex gap-2">
+                                        <button
+                                            type="button" onClick={() => moveImage(index, 'left')}
+                                            disabled={index === 0}
+                                            className="w-8 h-8 bg-white/20 hover:bg-white text-white hover:text-slate-900 rounded-lg flex items-center justify-center transition-all disabled:opacity-30"
+                                        >
+                                            <span className="material-symbols-outlined text-base">arrow_back</span>
+                                        </button>
+                                        <button
+                                            type="button" onClick={() => moveImage(index, 'right')}
+                                            disabled={index === images.length - 1}
+                                            className="w-8 h-8 bg-white/20 hover:bg-white text-white hover:text-slate-900 rounded-lg flex items-center justify-center transition-all disabled:opacity-30"
+                                        >
+                                            <span className="material-symbols-outlined text-base">arrow_forward</span>
+                                        </button>
+                                    </div>
                                     <button
                                         type="button" onClick={() => removeImage(index)}
-                                        className="w-10 h-10 bg-red-500 text-white rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-transform"
+                                        className="w-9 h-9 bg-red-500 text-white rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-transform"
                                     >
                                         <span className="material-symbols-outlined">delete</span>
                                     </button>
@@ -245,17 +274,17 @@ export default function NovoProdutoPage() {
                             </div>
                         ))}
 
-                        {imageUrls.length === 0 && (
-                            <div className="col-span-full py-12 flex flex-col items-center justify-center border-2 border-dashed border-slate-700 rounded-2xl text-slate-500">
-                                <span className="material-symbols-outlined text-4xl mb-2">add_photo_alternate</span>
-                                <p className="text-sm font-bold">Nenhuma foto adicionada</p>
+                        {images.length === 0 && (
+                            <div className="col-span-full py-16 flex flex-col items-center justify-center border-2 border-dashed border-slate-700 rounded-2xl text-slate-500 bg-slate-900/50">
+                                <span className="material-symbols-outlined text-5xl mb-3 opacity-30">add_photo_alternate</span>
+                                <p className="text-sm font-bold opacity-50">Nenhuma foto adicionada</p>
                             </div>
                         )}
                     </div>
                 </div>
 
                 {/* Preço e Quantidade */}
-                <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700 space-y-5">
+                <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700 space-y-5 shadow-xl">
                     <h2 className="font-bold text-lg text-white flex items-center gap-2">
                         <span className="material-symbols-outlined text-primary">payments</span>
                         Preço e Quantidade
@@ -266,7 +295,7 @@ export default function NovoProdutoPage() {
                             <label className="block text-sm font-bold text-slate-300 mb-2">Preço (R$) *</label>
                             <input
                                 type="number" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} required
-                                className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl px-4 py-3 text-white focus:border-primary focus:ring-0 transition-colors"
+                                className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl px-4 py-3 text-white focus:border-primary focus:ring-0 transition-colors outline-none"
                                 placeholder="0.00"
                             />
                         </div>
@@ -275,7 +304,7 @@ export default function NovoProdutoPage() {
                             <label className="block text-sm font-bold text-slate-300 mb-2">Qtd. Mínima</label>
                             <input
                                 type="number" value={minQuantity} onChange={(e) => setMinQuantity(e.target.value)}
-                                className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl px-4 py-3 text-white focus:border-primary focus:ring-0 transition-colors"
+                                className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl px-4 py-3 text-white focus:border-primary focus:ring-0 transition-colors outline-none"
                             />
                         </div>
 
@@ -283,7 +312,7 @@ export default function NovoProdutoPage() {
                             <label className="block text-sm font-bold text-slate-300 mb-2">Prazo de Produção</label>
                             <input
                                 type="text" value={productionTime} onChange={(e) => setProductionTime(e.target.value)}
-                                className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl px-4 py-3 text-white focus:border-primary focus:ring-0 transition-colors"
+                                className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl px-4 py-3 text-white focus:border-primary focus:ring-0 transition-colors outline-none"
                                 placeholder="Ex: 15 dias úteis"
                             />
                         </div>
@@ -291,7 +320,7 @@ export default function NovoProdutoPage() {
                 </div>
 
                 {/* Classificação */}
-                <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700 space-y-5">
+                <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700 space-y-5 shadow-xl">
                     <h2 className="font-bold text-lg text-white flex items-center gap-2">
                         <span className="material-symbols-outlined text-primary">label</span>
                         Classificação
@@ -302,7 +331,7 @@ export default function NovoProdutoPage() {
                             <label className="block text-sm font-bold text-slate-300 mb-2">Categoria</label>
                             <select
                                 value={categoryId} onChange={(e) => setCategoryId(e.target.value)}
-                                className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl px-4 py-3 text-white focus:border-primary focus:ring-0 transition-colors"
+                                className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl px-4 py-3 text-white focus:border-primary focus:ring-0 transition-colors outline-none"
                             >
                                 <option value="">Selecione...</option>
                                 {categories.map(cat => (
@@ -315,7 +344,7 @@ export default function NovoProdutoPage() {
                             <label className="block text-sm font-bold text-slate-300 mb-2">Tag</label>
                             <input
                                 type="text" value={tag} onChange={(e) => setTag(e.target.value)}
-                                className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl px-4 py-3 text-white focus:border-primary focus:ring-0 transition-colors"
+                                className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl px-4 py-3 text-white focus:border-primary focus:ring-0 transition-colors outline-none"
                                 placeholder="Ex: Bestseller, Novo, Premium"
                             />
                         </div>
@@ -325,11 +354,11 @@ export default function NovoProdutoPage() {
                             <div className="flex gap-3">
                                 <button
                                     type="button" onClick={() => setStatus('active')}
-                                    className={`flex-1 rounded-xl px-4 py-3 font-bold text-sm transition-all ${status === 'active' ? 'bg-green-500/20 text-green-400 border-2 border-green-500/30' : 'bg-slate-900 text-slate-400 border-2 border-slate-700'}`}
+                                    className={`flex-1 rounded-xl px-4 py-3 font-bold text-sm transition-all shadow-md ${status === 'active' ? 'bg-green-600 text-white border-2 border-green-500' : 'bg-slate-900 text-slate-400 border-2 border-slate-700 opacity-50'}`}
                                 >Ativo</button>
                                 <button
                                     type="button" onClick={() => setStatus('draft')}
-                                    className={`flex-1 rounded-xl px-4 py-3 font-bold text-sm transition-all ${status === 'draft' ? 'bg-yellow-500/20 text-yellow-400 border-2 border-yellow-500/30' : 'bg-slate-900 text-slate-400 border-2 border-slate-700'}`}
+                                    className={`flex-1 rounded-xl px-4 py-3 font-bold text-sm transition-all shadow-md ${status === 'draft' ? 'bg-yellow-600 text-white border-2 border-yellow-500' : 'bg-slate-900 text-slate-400 border-2 border-slate-700 opacity-50'}`}
                                 >Rascunho</button>
                             </div>
                         </div>
@@ -338,9 +367,9 @@ export default function NovoProdutoPage() {
                             <label className="block text-sm font-bold text-slate-300 mb-2">Destaque</label>
                             <button
                                 type="button" onClick={() => setFeatured(!featured)}
-                                className={`w-full rounded-xl px-4 py-3 font-bold text-sm transition-all flex items-center justify-center gap-2 ${featured ? 'bg-primary/20 text-primary border-2 border-primary/30' : 'bg-slate-900 text-slate-400 border-2 border-slate-700'}`}
+                                className={`w-full rounded-xl px-4 py-3 font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-md ${featured ? 'bg-orange-600 text-white border-2 border-orange-500' : 'bg-slate-900 text-slate-400 border-2 border-slate-700 opacity-50'}`}
                             >
-                                <span className="material-symbols-outlined text-lg">{featured ? 'star' : 'star_border'}</span>
+                                <span className="material-symbols-outlined text-lg">{featured ? 'stars' : 'star_border'}</span>
                                 {featured ? 'Em destaque' : 'Não destacado'}
                             </button>
                         </div>
@@ -348,17 +377,17 @@ export default function NovoProdutoPage() {
                 </div>
 
                 {/* Ações */}
-                <div className="flex gap-4">
+                <div className="flex gap-4 pt-6 pb-20">
                     <button
                         type="submit" disabled={saving}
-                        className="inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3 text-white font-bold hover:bg-primary/90 transition-all disabled:opacity-50 shadow-lg shadow-primary/20"
+                        className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-8 py-4 text-white font-black text-lg hover:bg-primary/90 transition-all disabled:opacity-50 shadow-xl shadow-primary/30"
                     >
                         <span className="material-symbols-outlined">{saving ? 'hourglass_empty' : 'save'}</span>
                         {saving ? (uploading ? 'Enviando Fotos...' : 'Salvando...') : (isEditing ? 'Salvar Alterações' : 'Criar Produto')}
                     </button>
                     <Link
                         href="/admin"
-                        className="inline-flex items-center gap-2 rounded-xl border-2 border-slate-700 px-8 py-3 text-slate-400 font-bold hover:border-slate-500 transition-all"
+                        className="inline-flex items-center gap-2 rounded-2xl border-2 border-slate-700 px-8 py-4 text-slate-400 font-bold hover:border-slate-500 transition-all"
                     >
                         Cancelar
                     </Link>
