@@ -180,7 +180,7 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
                             </p>
                             <div className="h-1 w-16 bg-primary/20 rounded-full mb-6" />
 
-                            <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed mb-8">
+                            <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed mb-8 whitespace-pre-wrap">
                                 {product.description}
                             </p>
 
@@ -210,7 +210,11 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
                                     {product.production_time && (
                                         <div className="flex items-center gap-2 text-sm">
                                             <span className="text-slate-400">Prazo de produção:</span>
-                                            <span className="font-bold text-green-600">{product.production_time}</span>
+                                            <span className="font-bold text-green-600">
+                                                {product.production_time.toLowerCase().includes('dia')
+                                                    ? product.production_time
+                                                    : `${product.production_time} dias úteis`}
+                                            </span>
                                         </div>
                                     )}
                                 </div>
