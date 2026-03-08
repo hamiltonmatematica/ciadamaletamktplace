@@ -17,6 +17,8 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
     const [activeImage, setActiveImage] = useState(0);
     const [quantity, setQuantity] = useState(1);
     const [loading, setLoading] = useState(true);
+    const [zoomPos, setZoomPos] = useState({ x: 0, y: 0 });
+    const [showZoom, setShowZoom] = useState(false);
     const { addItem } = useQuoteCart();
 
     useEffect(() => {
@@ -82,6 +84,13 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
         addItem(product, quantity);
     };
 
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+        const x = ((e.pageX - left - window.scrollX) / width) * 100;
+        const y = ((e.pageY - top - window.scrollY) / height) * 100;
+        setZoomPos({ x, y });
+    };
+
     return (
         <div className="relative flex min-h-screen flex-col">
             <Header />
@@ -125,12 +134,29 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
                                 </div>
                             )}
                             {/* Main Image */}
-                            <div className="relative flex-1 aspect-square overflow-hidden rounded-3xl bg-white shadow-2xl border border-primary/5 group">
+                            <div
+                                className="relative flex-1 aspect-square overflow-hidden rounded-3xl bg-white shadow-2xl border border-primary/5 cursor-zoom-in"
+                                onMouseMove={handleMouseMove}
+                                onMouseEnter={() => setShowZoom(true)}
+                                onMouseLeave={() => setShowZoom(false)}
+                            >
                                 <img
                                     src={mainImage}
                                     alt={product.name}
-                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                    className={`w-full h-full object-cover transition-transform duration-500 ${showZoom ? 'scale-[2.5]' : 'scale-100'}`}
+                                    style={showZoom ? {
+                                        transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`
+                                    } : {}}
                                 />
+
+                                {/* Zoom Indicator Overlay */}
+                                {!showZoom && (
+                                    <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-[10px] font-bold flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <span className="material-symbols-outlined text-sm">zoom_in</span>
+                                        PASSE O MOUSE PARA ZOOM
+                                    </div>
+                                )}
+
                                 {product.tag && (
                                     <div className="absolute top-4 left-4">
                                         <span className="rounded-full bg-primary px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-white shadow-lg">
