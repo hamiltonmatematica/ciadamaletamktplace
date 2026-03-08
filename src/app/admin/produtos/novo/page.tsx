@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createProduct, updateProduct, getAllCategories, getAllProducts } from '@/lib/data';
+import { createProduct, updateProduct, getAllCategories, getAllProducts, uploadProductImage } from '@/lib/data';
 import { Category, Product } from '@/types/database';
 
 export default function NovoProdutoPage() {
@@ -26,7 +26,9 @@ export default function NovoProdutoPage() {
     const [featured, setFeatured] = useState(false);
     const [tag, setTag] = useState('');
     const [productionTime, setProductionTime] = useState('');
-    const [imageUrls, setImageUrls] = useState<string[]>(['']);
+    const [imageUrls, setImageUrls] = useState<string[]>([]);
+    const [imageFiles, setImageFiles] = useState<File[]>([]);
+    const [uploading, setUploading] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
 
     useEffect(() => {
@@ -68,44 +70,74 @@ export default function NovoProdutoPage() {
         setErrorMsg('');
     };
 
-    const addImageUrl = () => setImageUrls([...imageUrls, '']);
-    const removeImageUrl = (index: number) => {
-        const newUrls = imageUrls.filter((_, i) => i !== index);
-        setImageUrls(newUrls.length ? newUrls : ['']);
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            const files = Array.from(e.target.files);
+            setImageFiles(prev => [...prev, ...files]);
+
+            // Criar URLs temporários para preview local
+            const previews = files.map(file => URL.createObjectURL(file));
+            setImageUrls(prev => [...prev, ...previews]);
+        }
     };
-    const updateImageUrl = (index: number, value: string) => {
-        const newUrls = [...imageUrls];
-        newUrls[index] = value;
-        setImageUrls(newUrls);
+
+    const removeImage = (index: number) => {
+        setImageUrls(prev => prev.filter((_, i) => i !== index));
+        setImageFiles(prev => prev.filter((_, i) => i !== index));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setErrorMsg('');
         setSaving(true);
+        setUploading(true);
 
-        const validImageUrls = imageUrls.filter(url => url.trim() !== '');
+        try {
+            // Fazer upload de todas as imagens que são novas (File objects)
+            const finalImageUrls: string[] = [];
 
-        const productData = {
-            name, slug, code: code || null, description: description || null,
-            price: parseFloat(price) || 0, min_quantity: parseInt(minQuantity) || 1,
-            category_id: categoryId || null, status, featured,
-            tag: tag || null, production_time: productionTime || null,
-            imageUrls: validImageUrls
-        };
+            for (let i = 0; i < imageUrls.length; i++) {
+                const url = imageUrls[i];
+                // Se o URL começa com 'blob:', é um arquivo local que precisa de upload
+                if (url.startsWith('blob:')) {
+                    const file = imageFiles.find(f => URL.createObjectURL(f).split('/').pop() === url.split('/').pop()) || imageFiles[0]; // fallback heurístico simplificado
+                    // Nota: A lógica acima de encontrar o arquivo exato pode falhar, 
+                    // uma alternativa mais robusta:
+                    const fileIndex = imageUrls.slice(0, i + 1).filter(u => u.startsWith('blob:')).length - 1;
+                    const uploadedUrl = await uploadProductImage(imageFiles[fileIndex]);
+                    if (uploadedUrl) finalImageUrls.push(uploadedUrl);
+                } else {
+                    // Já é um URL remoto (edição)
+                    finalImageUrls.push(url);
+                }
+            }
 
-        let result;
-        if (isEditing && productId) {
-            result = await updateProduct(productId, productData);
-        } else {
-            result = await createProduct(productData);
-        }
+            const productData = {
+                name, slug, code: code || null, description: description || null,
+                price: parseFloat(price) || 0, min_quantity: parseInt(minQuantity) || 1,
+                category_id: categoryId || null, status, featured,
+                tag: tag || null, production_time: productionTime || null,
+                imageUrls: finalImageUrls
+            };
 
-        if (result) {
-            router.push('/admin');
-        } else {
-            setErrorMsg(`Erro ao ${isEditing ? 'atualizar' : 'cadastrar'} produto. Verifique se todos os campos estão corretos.`);
+            let result;
+            if (isEditing && productId) {
+                result = await updateProduct(productId, productData);
+            } else {
+                result = await createProduct(productData);
+            }
+
+            if (result) {
+                router.push('/admin');
+            } else {
+                setErrorMsg(`Erro ao ${isEditing ? 'atualizar' : 'cadastrar'} produto. Verifique se todos os campos estão corretos.`);
+            }
+        } catch (err) {
+            console.error(err);
+            setErrorMsg('Erro inesperado ao processar imagens ou salvar produto.');
+        } finally {
             setSaving(false);
+            setUploading(false);
         }
     };
 
@@ -178,40 +210,47 @@ export default function NovoProdutoPage() {
                             <span className="material-symbols-outlined text-primary">image</span>
                             Imagens do Produto
                         </h2>
-                        <button
-                            type="button" onClick={addImageUrl}
-                            className="text-xs font-bold text-primary hover:text-white transition-colors flex items-center gap-1"
-                        >
-                            <span className="material-symbols-outlined text-sm">add</span>
-                            Adicionar Foto
-                        </button>
+                        <label className="cursor-pointer inline-flex items-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary px-4 py-2 rounded-xl text-sm font-bold transition-all">
+                            <span className="material-symbols-outlined text-lg">add_a_photo</span>
+                            Escolher Fotos
+                            <input
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                className="hidden"
+                                onChange={handleFileChange}
+                            />
+                        </label>
                     </div>
 
-                    <p className="text-xs text-slate-400">Insira os links das imagens. A primeira será a principal.</p>
+                    <p className="text-xs text-slate-400">Arraste e solte ou escolha arquivos do seu computador. A primeira imagem será a principal.</p>
 
-                    <div className="space-y-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                         {imageUrls.map((url, index) => (
-                            <div key={index} className="flex gap-2">
-                                <div className="relative flex-1">
-                                    <input
-                                        type="url" value={url} onChange={(e) => updateImageUrl(index, e.target.value)}
-                                        className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl px-4 py-3 text-white focus:border-primary focus:ring-0 transition-colors outline-none text-sm"
-                                        placeholder="https://exemplo.com/foto.jpg"
-                                    />
-                                    {url && (
-                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg overflow-hidden border border-slate-700">
-                                            <img src={url} alt="Previa" className="w-full h-full object-cover" />
-                                        </div>
-                                    )}
+                            <div key={index} className="group relative aspect-square bg-slate-900 rounded-2xl overflow-hidden border-2 border-slate-700 hover:border-primary transition-all">
+                                <img src={url} alt="Produto" className="w-full h-full object-cover" />
+                                {index === 0 && (
+                                    <div className="absolute top-2 left-2 bg-primary text-[10px] font-black px-2 py-0.5 rounded shadow-lg uppercase tracking-wider">
+                                        Principal
+                                    </div>
+                                )}
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <button
+                                        type="button" onClick={() => removeImage(index)}
+                                        className="w-10 h-10 bg-red-500 text-white rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-transform"
+                                    >
+                                        <span className="material-symbols-outlined">delete</span>
+                                    </button>
                                 </div>
-                                <button
-                                    type="button" onClick={() => removeImageUrl(index)}
-                                    className="p-3 text-slate-500 hover:text-red-500 transition-colors"
-                                >
-                                    <span className="material-symbols-outlined">delete</span>
-                                </button>
                             </div>
                         ))}
+
+                        {imageUrls.length === 0 && (
+                            <div className="col-span-full py-12 flex flex-col items-center justify-center border-2 border-dashed border-slate-700 rounded-2xl text-slate-500">
+                                <span className="material-symbols-outlined text-4xl mb-2">add_photo_alternate</span>
+                                <p className="text-sm font-bold">Nenhuma foto adicionada</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -315,7 +354,7 @@ export default function NovoProdutoPage() {
                         className="inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3 text-white font-bold hover:bg-primary/90 transition-all disabled:opacity-50 shadow-lg shadow-primary/20"
                     >
                         <span className="material-symbols-outlined">{saving ? 'hourglass_empty' : 'save'}</span>
-                        {saving ? 'Salvando...' : (isEditing ? 'Salvar Alterações' : 'Criar Produto')}
+                        {saving ? (uploading ? 'Enviando Fotos...' : 'Salvando...') : (isEditing ? 'Salvar Alterações' : 'Criar Produto')}
                     </button>
                     <Link
                         href="/admin"

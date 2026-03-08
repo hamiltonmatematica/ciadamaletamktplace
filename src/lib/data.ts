@@ -258,6 +258,32 @@ export async function updateProduct(id: string, updates: Partial<Product> & { im
     return updatedProduct;
 }
 
+export async function uploadProductImage(file: File): Promise<string | null> {
+    if (!isSupabaseConfigured) {
+        // Mock upload: retorna um blob URL local para testes sem Supabase
+        return URL.createObjectURL(file);
+    }
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+    const filePath = `products/${fileName}`;
+
+    const { error: uploadError } = await supabase!.storage
+        .from('products')
+        .upload(filePath, file);
+
+    if (uploadError) {
+        console.error('Erro ao fazer upload:', uploadError.message);
+        return null;
+    }
+
+    const { data: { publicUrl } } = supabase!.storage
+        .from('products')
+        .getPublicUrl(filePath);
+
+    return publicUrl;
+}
+
 export async function deleteProduct(id: string): Promise<boolean> {
     if (!isSupabaseConfigured) {
         const idx = MOCK_PRODUCTS.findIndex(p => p.id === id);
