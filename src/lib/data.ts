@@ -222,7 +222,11 @@ export async function createProduct(product: CreateProductInput): Promise<{ data
         }));
 
         const { error: iError } = await supabase!.from('product_images').insert(imagesToInsert);
-        if (iError) console.error('Erro ao inserir imagens:', iError.message);
+        if (iError) {
+            console.error('Erro ao inserir imagens:', iError.message);
+            // Optionally rollback the product creation or just return the error
+            return { data: newProduct, error: `Produto criado, mas erro nas imagens: ${iError.message}` };
+        }
     }
 
     return { data: newProduct, error: null };
@@ -270,7 +274,10 @@ export async function updateProduct(id: string, updates: Partial<Product> & { im
                 is_main: index === 0
             }));
             const { error: iError } = await supabase!.from('product_images').insert(imagesToInsert);
-            if (iError) console.error('Erro ao inserir novas imagens:', iError.message);
+            if (iError) {
+                console.error('Erro ao inserir novas imagens:', iError.message);
+                return { data: updatedProduct, error: `Produto atualizado, mas erro nas imagens: ${iError.message}` };
+            }
         }
     }
 
