@@ -5,20 +5,26 @@ import { useState, useEffect } from 'react';
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
 import ProductCard from '@/components/ui/product-card';
-import { getCategories, getProducts, getFeaturedProducts } from '@/lib/data';
+import { getCategories, getProducts, getFeaturedProducts, getNewestProducts } from '@/lib/data';
 import { Category, Product } from '@/types/database';
 
 export default function Home() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
+    const [newestProducts, setNewestProducts] = useState<Product[]>([]);
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         async function load() {
-            const [cats, prods] = await Promise.all([getCategories(), getFeaturedProducts()]);
+            const [cats, prods, latest] = await Promise.all([
+                getCategories(),
+                getFeaturedProducts(),
+                getNewestProducts(20)
+            ]);
             setCategories(cats);
             setProducts(prods);
+            setNewestProducts(latest);
             setLoading(false);
         }
         load();
@@ -153,6 +159,28 @@ export default function Home() {
                         </div>
                     )}
                 </section>
+
+                {/* New Arrivals Section */}
+                {!activeCategory && newestProducts.length > 0 && (
+                    <section className="mx-auto max-w-7xl px-4 sm:px-6 py-16 border-t border-slate-100 dark:border-slate-800/50">
+                        <div className="mb-10">
+                            <h2 className="text-4xl font-black tracking-tight">Últimos Lançamentos</h2>
+                            <p className="mt-2 text-slate-500 font-medium flex items-center justify-between">
+                                Explore as novidades mais recentes da nossa loja
+                                <Link href="/catalogo" className="text-primary font-bold hover:underline flex items-center gap-1">
+                                    Ver Todos
+                                    <span className="material-symbols-outlined text-sm">chevron_right</span>
+                                </Link>
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 sm:gap-8 lg:grid-cols-4">
+                            {newestProducts.map((product) => (
+                                <ProductCard key={product.id} product={product} />
+                            ))}
+                        </div>
+                    </section>
+                )}
 
             </main>
 

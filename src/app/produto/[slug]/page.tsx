@@ -105,7 +105,12 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
                     <span className="material-symbols-outlined text-slate-300 text-sm">chevron_right</span>
                     {product.category && (
                         <>
-                            <span className="text-slate-400">{product.category.name}</span>
+                            <Link
+                                href={`/catalogo?categoria=${product.category.slug}`}
+                                className="text-slate-400 hover:text-primary transition-colors"
+                            >
+                                {product.category.name}
+                            </Link>
                             <span className="material-symbols-outlined text-slate-300 text-sm">chevron_right</span>
                         </>
                     )}

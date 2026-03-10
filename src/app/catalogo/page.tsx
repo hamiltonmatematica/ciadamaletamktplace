@@ -1,13 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
 import ProductCard from '@/components/ui/product-card';
 import { getProducts, getCategories } from '@/lib/data';
 import { Category, Product } from '@/types/database';
 
-export default function CatalogoPage() {
+function CatalogoContent() {
+    const searchParams = useSearchParams();
+    const categoriaParam = searchParams.get('categoria');
+
     const [categories, setCategories] = useState<Category[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -15,13 +19,21 @@ export default function CatalogoPage() {
 
     useEffect(() => {
         async function load() {
-            const [cats, prods] = await Promise.all([getCategories(), getProducts()]);
+            setLoading(true);
+            const initialCategory = categoriaParam || null;
+            setActiveCategory(initialCategory);
+
+            const [cats, prods] = await Promise.all([
+                getCategories(),
+                getProducts(initialCategory || undefined)
+            ]);
+
             setCategories(cats);
             setProducts(prods);
             setLoading(false);
         }
         load();
-    }, []);
+    }, [categoriaParam]);
 
     const handleCategoryClick = async (slug: string | null) => {
         setActiveCategory(slug);
@@ -96,5 +108,17 @@ export default function CatalogoPage() {
 
             <Footer />
         </div>
+    );
+}
+
+export default function CatalogoPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+            </div>
+        }>
+            <CatalogoContent />
+        </Suspense>
     );
 }
