@@ -29,6 +29,7 @@ export default function NovoProdutoPage() {
     // Imagens agora são objetos para manter a relação URL/Arquivo e permitir ordenação
     const [images, setImages] = useState<{ url: string; file?: File }[]>([]);
     const [uploading, setUploading] = useState(false);
+    const [processingImages, setProcessingImages] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
 
     useEffect(() => {
@@ -70,14 +71,38 @@ export default function NovoProdutoPage() {
         setErrorMsg('');
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
+            setProcessingImages(true);
             const files = Array.from(e.target.files);
-            const newImages = files.map(file => ({
-                url: URL.createObjectURL(file),
-                file
-            }));
+            const newImages: { url: string; file: File }[] = [];
+
+            for (let file of files) {
+                try {
+                    const isHeic = file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif') || file.type === 'image/heic' || file.type === 'image/heif';
+                    if (isHeic) {
+                        const heic2any = (await import('heic2any')).default;
+                        const convertedBlob = await heic2any({
+                            blob: file,
+                            toType: 'image/jpeg',
+                            quality: 0.8
+                        });
+                        const blobToUse = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+                        const newName = file.name.replace(/\.(heic|heif)$/i, '.jpg');
+                        file = new File([blobToUse], newName, { type: 'image/jpeg' });
+                    }
+                } catch (err) {
+                    console.error('Erro ao converter imagem HEIC:', err);
+                }
+
+                newImages.push({
+                    url: URL.createObjectURL(file),
+                    file
+                });
+            }
+
             setImages(prev => [...prev, ...newImages]);
+            setProcessingImages(false);
         }
     };
 
@@ -221,15 +246,16 @@ export default function NovoProdutoPage() {
                             <span className="material-symbols-outlined text-primary">image</span>
                             Imagens do Produto
                         </h2>
-                        <label className="cursor-pointer inline-flex items-center gap-2 bg-primary px-4 py-2 rounded-xl text-sm text-white font-bold transition-all hover:bg-primary/90 shadow-lg shadow-primary/20">
-                            <span className="material-symbols-outlined text-lg">add_a_photo</span>
-                            Escolher Fotos
+                        <label className={`cursor-pointer inline-flex items-center gap-2 bg-primary px-4 py-2 rounded-xl text-sm text-white font-bold transition-all shadow-lg shadow-primary/20 ${processingImages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary/90'}`}>
+                            <span className="material-symbols-outlined text-lg">{processingImages ? 'hourglass_empty' : 'add_a_photo'}</span>
+                            {processingImages ? 'Processando (HEIC -> JPG)...' : 'Escolher Fotos'}
                             <input
                                 type="file"
-                                accept="image/*"
+                                accept="image/*,image/heic,image/heif,.heic,.heif"
                                 multiple
                                 className="hidden"
                                 onChange={handleFileChange}
+                                disabled={processingImages}
                             />
                         </label>
                     </div>
