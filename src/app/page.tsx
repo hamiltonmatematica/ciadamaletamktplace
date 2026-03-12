@@ -61,20 +61,21 @@ export default function Home() {
                 <section className="mx-auto max-w-7xl px-4 sm:px-6 py-4">
                     <div className="relative overflow-hidden rounded-[2rem] sm:rounded-3xl bg-slate-900 aspect-[4/3] sm:aspect-[21/9] flex items-center justify-center text-center group">
                         <div className="absolute inset-0 z-0">
+                            <div className="absolute inset-0 bg-black/40 z-[1]" />
                             <img
-                                className="h-full w-full object-cover opacity-60 transition-transform duration-1000 group-hover:scale-105"
+                                className="h-full w-full object-cover opacity-100 transition-transform duration-1000 group-hover:scale-105"
                                 alt="Decoração de festa"
-                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQBr6e9zxJ9OLTH29ldCNVaGvlPnBmLaicyrkdfkqHLZ0dhSzvFnuNLwujd-YDYWfUZXHWqU5YeYRmztf69k9D19l5s1w0Qr37wnbx24qCVuXhkh1GCu8MeMHu9Bm5bUcqVlOaoUzlLndrSwUh1aYesTYM8kl7ua3oY8EYkGwHk9-QQNWSAHOuh2HjWwn0ycljR6V-uH9_Xo1eZx7XD3k6QPTVlFSE1BJJpoYdKks5UmxUmaPBcJfLhviTCCsggv6KSjx-ignYf7EG"
+                                src="/back.png"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-background-dark/80 via-transparent to-transparent" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-[2]" />
                         </div>
                         <div className="relative z-10 w-full px-4 sm:px-12 mt-8 sm:mt-0 max-w-2xl">
-                            <h2 className="mb-2 sm:mb-4 text-3xl sm:text-5xl font-black tracking-tight text-white lg:text-7xl">Festas Mágicas</h2>
-                            <p className="mb-6 sm:mb-8 text-sm sm:text-lg font-medium text-slate-200 lg:text-xl hidden sm:block">
+                            <h2 className="mb-2 sm:mb-4 text-3xl sm:text-5xl font-black tracking-tight text-white lg:text-7xl drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">Lembranças dos Sonhos</h2>
+                            <p className="mb-6 sm:mb-8 text-sm sm:text-lg font-bold text-white lg:text-xl hidden sm:block drop-shadow-[0_1px_5px_rgba(0,0,0,0.5)]">
                                 Descubra nossa coleção exclusiva de maletas e kits de festa personalizados para tornar cada celebração inesquecível.
                             </p>
                             <Link href="/catalogo" className="group inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 sm:px-8 sm:py-4 text-sm sm:text-lg font-bold text-white shadow-xl shadow-primary/30 hover:bg-primary/90 hover:scale-105 transition-all">
-                                Ver Coleção
+                                Catálogo
                                 <span className="material-symbols-outlined text-lg sm:text-2xl group-hover:translate-x-1 transition-transform">arrow_forward</span>
                             </Link>
                         </div>
