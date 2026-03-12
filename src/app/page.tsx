@@ -72,7 +72,7 @@ export default function Home() {
                         <div className="relative z-10 w-full px-4 sm:px-12 mt-8 sm:mt-0 max-w-2xl">
                             <h2 className="mb-2 sm:mb-4 text-3xl sm:text-5xl font-black tracking-tight text-white lg:text-7xl drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">Lembranças dos Sonhos</h2>
                             <p className="mb-6 sm:mb-8 text-sm sm:text-lg font-bold text-white lg:text-xl hidden sm:block drop-shadow-[0_1px_5px_rgba(0,0,0,0.5)]">
-                                Descubra nossa coleção exclusiva de maletas e kits de festa personalizados para tornar cada celebração inesquecível.
+                                Veja nossa coleção exclusiva de maletas e kits de festa personalizados para tornar cada celebração inesquecível.
                             </p>
                             <Link href="/catalogo" className="group inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 sm:px-8 sm:py-4 text-sm sm:text-lg font-bold text-white shadow-xl shadow-primary/30 hover:bg-primary/90 hover:scale-105 transition-all">
                                 Catálogo
