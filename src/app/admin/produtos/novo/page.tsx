@@ -76,10 +76,21 @@ export default function NovoProdutoPage() {
             setProcessingImages(true);
             setErrorMsg('');
             const files = Array.from(e.target.files);
-            const newImages: { url: string; file: File }[] = [];
+            const newMedia: { url: string; file: File; type: 'image' | 'video' }[] = [];
 
             for (let file of files) {
                 try {
+                    const isVideo = file.type.startsWith('video/') || file.name.toLowerCase().endsWith('.mov') || file.name.toLowerCase().endsWith('.mp4');
+                    
+                    if (isVideo) {
+                        newMedia.push({
+                            url: URL.createObjectURL(file),
+                            file,
+                            type: 'video'
+                        });
+                        continue;
+                    }
+
                     // 1. Converter HEIC se necessário
                     const isHeic = file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif') || file.type === 'image/heic' || file.type === 'image/heif';
                     
@@ -107,20 +118,21 @@ export default function NovoProdutoPage() {
                          file = compressed;
                     }
 
-                    newImages.push({
+                    newMedia.push({
                         url: URL.createObjectURL(file),
-                        file
+                        file,
+                        type: 'image'
                     });
                 } catch (err) {
                     console.error('Erro ao processar imagem:', err);
                 }
             }
 
-            if (newImages.length === 0 && files.length > 0) {
-                setErrorMsg('Não foi possível processar as imagens selecionadas. Tente fotos em outro formato.');
+            if (newMedia.length === 0 && files.length > 0) {
+                setErrorMsg('Não foi possível processar os arquivos selecionados.');
             }
 
-            setImages(prev => [...prev, ...newImages]);
+            setImages(prev => [...prev, ...newMedia as any]);
             setProcessingImages(false);
         }
     };
@@ -193,6 +205,14 @@ export default function NovoProdutoPage() {
         setImages(newImages);
     };
 
+    const formatDescription = (text: string) => {
+        return text.split('\n').map(line => {
+            const trimmed = line.trim();
+            if (trimmed.length === 0) return line;
+            return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+        }).join('\n');
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setErrorMsg('');
@@ -201,6 +221,7 @@ export default function NovoProdutoPage() {
 
         try {
             const finalImageUrls: string[] = [];
+            const formattedDescription = formatDescription(description);
 
             for (const img of images) {
                 if (img.file) {
@@ -216,7 +237,7 @@ export default function NovoProdutoPage() {
             }
 
             const productData = {
-                name, slug, code: code || null, description: description || null,
+                name, slug, code: code || null, description: formattedDescription || null,
                 price: parseFloat(price) || 0, min_quantity: parseInt(minQuantity) || 1,
                 category_id: categoryId || null, status, featured,
                 tag: tag || null, production_time: productionTime || null,
@@ -319,7 +340,7 @@ export default function NovoProdutoPage() {
                             {processingImages ? 'Processando (HEIC -> JPG)...' : 'Escolher Fotos'}
                             <input
                                 type="file"
-                                accept="image/*,image/heic,image/heif,.heic,.heif"
+                                accept="image/*,video/*,image/heic,image/heif,.heic,.heif,.mov,.mp4"
                                 multiple
                                 className="hidden"
                                 onChange={handleFileChange}
@@ -333,7 +354,11 @@ export default function NovoProdutoPage() {
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                         {images.map((img, index) => (
                             <div key={index} className="group relative aspect-square bg-slate-900 rounded-2xl overflow-hidden border-2 border-slate-700 hover:border-primary transition-all shadow-md">
-                                <img src={img.url} alt={`Preview ${index}`} className="w-full h-full object-cover" />
+                             {(img as any).type === 'video' || img.url.toLowerCase().includes('.mov') || img.url.toLowerCase().includes('.mp4') ? (
+                                    <video src={img.url} className="w-full h-full object-cover" />
+                                ) : (
+                                    <img src={img.url} alt={`Preview ${index}`} className="w-full h-full object-cover" />
+                                )}
 
                                 {index === 0 && (
                                     <div className="absolute top-2 left-2 bg-primary text-[10px] font-black px-2 py-0.5 rounded shadow-lg uppercase tracking-wider text-white">

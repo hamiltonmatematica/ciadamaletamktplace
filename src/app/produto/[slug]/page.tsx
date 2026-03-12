@@ -127,13 +127,19 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
                             {images.length > 1 && (
                                 <div className="flex flex-col gap-3 w-20 flex-shrink-0">
                                     {images.map((img, idx) => (
-                                        <button
+                                         <button
                                             key={img.id}
                                             onClick={() => setActiveImage(idx)}
                                             className={`aspect-square rounded-xl overflow-hidden border-2 transition-all ${activeImage === idx ? 'border-primary shadow-lg' : 'border-transparent opacity-60 hover:opacity-100'
                                                 }`}
                                         >
-                                            <img src={img.url} alt={`${product.name} ${idx + 1}`} className="w-full h-full object-cover" />
+                                            {img.url.toLowerCase().match(/\.(mp4|mov|webm)$/) ? (
+                                                <div className="w-full h-full bg-slate-100 flex items-center justify-center">
+                                                    <span className="material-symbols-outlined text-slate-400">videocam</span>
+                                                </div>
+                                            ) : (
+                                                <img src={img.url} alt={`${product.name} ${idx + 1}`} className="w-full h-full object-cover" />
+                                            )}
                                         </button>
                                     ))}
                                 </div>
@@ -145,14 +151,25 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
                                 onMouseEnter={() => setShowZoom(true)}
                                 onMouseLeave={() => setShowZoom(false)}
                             >
-                                <img
-                                    src={mainImage}
-                                    alt={product.name}
-                                    className={`w-full h-full object-cover transition-transform duration-500 ${showZoom ? 'scale-[2.5]' : 'scale-100'}`}
-                                    style={showZoom ? {
-                                        transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`
-                                    } : {}}
-                                />
+                                {mainImage.toLowerCase().match(/\.(mp4|mov|webm)$/) ? (
+                                    <video
+                                        src={mainImage}
+                                        controls
+                                        autoPlay
+                                        muted
+                                        loop
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <img
+                                        src={mainImage}
+                                        alt={product.name}
+                                        className={`w-full h-full object-cover transition-transform duration-500 ${showZoom ? 'scale-[2.5]' : 'scale-100'}`}
+                                        style={showZoom ? {
+                                            transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`
+                                        } : {}}
+                                    />
+                                )}
 
                                 {/* Zoom Indicator Overlay */}
                                 {!showZoom && (

@@ -29,6 +29,14 @@ export interface Product {
     // Joined
     category?: Category;
     images?: ProductImage[];
+    videos?: ProductVideo[];
+}
+
+export interface ProductVideo {
+    id: string;
+    product_id: string;
+    url: string;
+    sort_order: number;
 }
 
 export interface ProductImage {
