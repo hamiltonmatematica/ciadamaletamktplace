@@ -336,8 +336,8 @@ export default function NovoProdutoPage() {
                             Imagens do Produto
                         </h2>
                         <label className={`cursor-pointer inline-flex items-center gap-2 bg-primary px-4 py-2 rounded-xl text-sm text-white font-bold transition-all shadow-lg shadow-primary/20 ${processingImages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary/90'}`}>
-                            <span className="material-symbols-outlined text-lg">{processingImages ? 'hourglass_empty' : 'add_a_photo'}</span>
-                            {processingImages ? 'Processando (HEIC -> JPG)...' : 'Escolher Fotos'}
+                            <span className="material-symbols-outlined text-lg">{processingImages ? 'hourglass_empty' : 'perm_media'}</span>
+                            {processingImages ? 'Processando...' : 'Escolher Fotos/Vídeos'}
                             <input
                                 type="file"
                                 accept="image/*,video/*,image/heic,image/heif,.heic,.heif,.mov,.mp4"
