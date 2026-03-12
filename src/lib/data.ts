@@ -291,9 +291,10 @@ export async function uploadProductImage(file: File): Promise<{ publicUrl: strin
 
     try {
         const fileExt = file.name.split('.').pop();
-        // Usar um nome limpo sem caracteres especiais
-        const cleanName = file.name.split('.')[0].replace(/[^a-zA-Z0-9]/g, '-');
-        const fileName = `${cleanName}-${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+        const lastDotIndex = file.name.lastIndexOf('.');
+        const baseName = lastDotIndex !== -1 ? file.name.substring(0, lastDotIndex) : file.name;
+        const cleanName = baseName.replace(/[^a-zA-Z0-9]/g, '-');
+        const fileName = `${cleanName}-${Math.random().toString(36).substring(2, 7)}-${Date.now()}.${fileExt}`;
         const filePath = fileName;
 
         const { error: uploadError } = await supabase!.storage

@@ -74,36 +74,104 @@ export default function NovoProdutoPage() {
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             setProcessingImages(true);
+            setErrorMsg('');
             const files = Array.from(e.target.files);
             const newImages: { url: string; file: File }[] = [];
 
             for (let file of files) {
                 try {
+                    // 1. Converter HEIC se necessário
                     const isHeic = file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif') || file.type === 'image/heic' || file.type === 'image/heif';
+                    
                     if (isHeic) {
-                        const heic2any = (await import('heic2any')).default;
-                        const convertedBlob = await heic2any({
-                            blob: file,
-                            toType: 'image/jpeg',
-                            quality: 0.8
-                        });
-                        const blobToUse = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
-                        const newName = file.name.replace(/\.(heic|heif)$/i, '.jpg');
-                        file = new File([blobToUse], newName, { type: 'image/jpeg' });
+                        try {
+                            const heic2any = (await import('heic2any')).default;
+                            const convertedBlob = await heic2any({
+                                blob: file,
+                                quality: 0.7
+                            });
+                            const blobToUse = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+                            const newName = file.name.replace(/\.(heic|heif)$/i, '.jpg');
+                            file = new File([blobToUse], newName, { type: 'image/jpeg' });
+                        } catch (convErr) {
+                            console.error('Erro na conversão HEIC:', convErr);
+                            // Se falhar a conversão de um HEIC, não adicionamos para evitar erro de upload posterior
+                            continue;
+                        }
                     }
-                } catch (err) {
-                    console.error('Erro ao converter imagem HEIC:', err);
-                }
 
-                newImages.push({
-                    url: URL.createObjectURL(file),
-                    file
-                });
+                    // 2. Redimensionar/Comprimir imagens muito grandes (> 1.5MB ou > 2000px)
+                    // Isso ajuda MUITO no upload pelo celular
+                    if (file.size > 1024 * 1024 || isHeic) {
+                         const compressed = await compressImage(file);
+                         file = compressed;
+                    }
+
+                    newImages.push({
+                        url: URL.createObjectURL(file),
+                        file
+                    });
+                } catch (err) {
+                    console.error('Erro ao processar imagem:', err);
+                }
+            }
+
+            if (newImages.length === 0 && files.length > 0) {
+                setErrorMsg('Não foi possível processar as imagens selecionadas. Tente fotos em outro formato.');
             }
 
             setImages(prev => [...prev, ...newImages]);
             setProcessingImages(false);
         }
+    };
+
+    // Função auxiliar para compressão de imagem no cliente
+    const compressImage = async (file: File): Promise<File> => {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target?.result as string;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    const MAX_SIZE = 1600; // Tamanho máximo razoável para web
+
+                    if (width > height) {
+                        if (width > MAX_SIZE) {
+                            height *= MAX_SIZE / width;
+                            width = MAX_SIZE;
+                        }
+                    } else {
+                        if (height > MAX_SIZE) {
+                            width *= MAX_SIZE / height;
+                            height = MAX_SIZE;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx?.drawImage(img, 0, 0, width, height);
+                    
+                    canvas.toBlob((blob) => {
+                        if (blob) {
+                            const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+                                type: 'image/jpeg',
+                                lastModified: Date.now()
+                            });
+                            resolve(newFile);
+                        } else {
+                            resolve(file);
+                        }
+                    }, 'image/jpeg', 0.8);
+                };
+                img.onerror = () => resolve(file);
+            };
+            reader.onerror = () => resolve(file);
+        });
     };
 
     const removeImage = (index: number) => {
