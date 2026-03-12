@@ -18,12 +18,13 @@ export default function ProductCard({ product }: ProductCardProps) {
             className="bg-white dark:bg-slate-900 rounded-[24px] md:rounded-3xl p-2.5 md:p-3 shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-2 md:gap-4 group cursor-pointer transition-all hover:shadow-xl hover:border-primary/20 relative"
         >
             <div className="relative w-full aspect-square rounded-[18px] md:rounded-2xl overflow-hidden bg-background-light">
-                {mainImage.toLowerCase().match(/\.(mp4|mov|webm)$/) ? (
+                {mainImage.toLowerCase().split('?')[0].match(/\.(mp4|mov|webm)$/) ? (
                     <video
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 md:group-hover:scale-110"
                         src={mainImage}
                         muted
                         loop
+                        playsInline
                         onMouseEnter={(e) => e.currentTarget.play()}
                         onMouseLeave={(e) => { e.currentTarget.pause(); e.currentTarget.currentTime = 0; }}
                     />

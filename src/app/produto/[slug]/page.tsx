@@ -133,7 +133,7 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
                                             className={`aspect-square rounded-xl overflow-hidden border-2 transition-all ${activeImage === idx ? 'border-primary shadow-lg' : 'border-transparent opacity-60 hover:opacity-100'
                                                 }`}
                                         >
-                                            {img.url.toLowerCase().match(/\.(mp4|mov|webm)$/) ? (
+                                            {img.url.toLowerCase().split('?')[0].match(/\.(mp4|mov|webm)$/) ? (
                                                 <div className="w-full h-full bg-slate-100 flex items-center justify-center">
                                                     <span className="material-symbols-outlined text-slate-400">videocam</span>
                                                 </div>
@@ -151,13 +151,14 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
                                 onMouseEnter={() => setShowZoom(true)}
                                 onMouseLeave={() => setShowZoom(false)}
                             >
-                                {mainImage.toLowerCase().match(/\.(mp4|mov|webm)$/) ? (
+                                {mainImage.toLowerCase().split('?')[0].match(/\.(mp4|mov|webm)$/) ? (
                                     <video
                                         src={mainImage}
                                         controls
                                         autoPlay
                                         muted
                                         loop
+                                        playsInline
                                         className="w-full h-full object-cover"
                                     />
                                 ) : (

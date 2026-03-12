@@ -354,8 +354,8 @@ export default function NovoProdutoPage() {
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                         {images.map((img, index) => (
                             <div key={index} className="group relative aspect-square bg-slate-900 rounded-2xl overflow-hidden border-2 border-slate-700 hover:border-primary transition-all shadow-md">
-                             {(img as any).type === 'video' || img.url.toLowerCase().includes('.mov') || img.url.toLowerCase().includes('.mp4') ? (
-                                    <video src={img.url} className="w-full h-full object-cover" />
+                             {(img as any).type === 'video' || img.url.toLowerCase().split('?')[0].includes('.mov') || img.url.toLowerCase().split('?')[0].includes('.mp4') ? (
+                                    <video src={img.url} className="w-full h-full object-cover" playsInline muted />
                                 ) : (
                                     <img src={img.url} alt={`Preview ${index}`} className="w-full h-full object-cover" />
                                 )}
